@@ -1,0 +1,8 @@
+---
+layout: post
+title:  "hellow world!"
+date:   2022-10-31 22:34:22 +0900
+categories: info
+---
+
+Open my github page.
