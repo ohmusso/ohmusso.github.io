@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  Autosar EcuM 4.2 Hardware Requirements
-date:   2023-02-06 22:00:00 +0900
+date:   2023-02-21 22:00:00 +0900
 categories: autosar
 tags: R19-11 ecum ram 
 ---
