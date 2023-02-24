@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  Autosar EcuM 5.1.1 MCU Driver
-date:   2023-02-23 16:00:00 +0900
+date:   2023-02-24 23:00:00 +0900
 categories: autosar
 tags: R19-11 ecum driver
 ---
@@ -13,6 +13,7 @@ tags: R19-11 ecum driver
 1. MCU_Initに加えて、必要なMCUドライバの初期化を行うこと。
 上記でドライバにクロックが供給されて、ドライバが動作できる状態となっている。
 ここで、各ドライバの詳細な設定を行う。
+また、BSWモジュールのメモリを初期しておく。
 
 1. EcuMは二つのコールアウトを提供すること。
 コールアウトで追加のMCUドライバの初期化を実行する。
