@@ -339,3 +339,30 @@
     width: calc(50% - (#{$spacing-unit} / 2));
   }
 }
+
+
+/**
+ * main side content
+ */
+ .main-side-content {
+  display: flex;
+  flex-direction: row;
+  min-height: 50vh;
+  min-width: 800px;
+}
+
+/**
+ * main content
+ */
+.main-content {
+  display: flex;
+  flex: auto
+}
+
+
+/**
+ * side content
+ */
+ .side-content {
+  display: flex;
+}
