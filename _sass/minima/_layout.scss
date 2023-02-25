@@ -202,7 +202,6 @@
  */
 .page-content {
   padding: $spacing-unit 0;
-  flex: 1 0 auto;
 }
 
 .page-heading {
@@ -356,7 +355,7 @@
  */
 .main-content {
   display: flex;
-  flex: auto
+  flex: 1 0 70%;
 }
 
 
@@ -365,4 +364,5 @@
  */
  .side-content {
   display: flex;
+  flex: 1 0 30%;
 }
