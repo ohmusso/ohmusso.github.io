@@ -33,6 +33,15 @@ sequenceDiagram
     John-->>-Alice: I feel great!
 ```
 
+<div class=mermaid>
+sequenceDiagram
+    Alice->>+John: Hello John, how are you?
+    Alice->>+John: John, can you hear me?
+    John-->>-Alice: Hi Alice, I can hear you!
+    John-->>-Alice: I feel great!
+
+</div>
+
 * 変更差分
 
 以下のコミットを見てください。
@@ -69,3 +78,7 @@ jekyllはmarkdownに書かれたコードブロック\(marmaid\)から以下のh
 [先駆者様 1](https://github.com/cotes2020/jekyll-theme-chirpy/blob/master/_includes/mermaid.html)
 
 [先駆者様 2](https://qiita.com/fumitoh/items/ff28e0720ab0ebc84e96)
+
+* 追記
+
+githubページにデプロイすると、図が作れてませんでした。。。
