@@ -202,6 +202,7 @@
  */
 .page-content {
   padding: $spacing-unit 0;
+  flex: 1 0 auto;
 }
 
 .page-heading {
@@ -337,32 +338,4 @@
   .one-half {
     width: calc(50% - (#{$spacing-unit} / 2));
   }
-}
-
-
-/**
- * main side content
- */
- .main-side-content {
-  display: flex;
-  flex-direction: row;
-  min-height: 50vh;
-  min-width: 800px;
-}
-
-/**
- * main content
- */
-.main-content {
-  display: flex;
-  flex: 1 0 70%;
-}
-
-
-/**
- * side content
- */
- .side-content {
-  display: flex;
-  flex: 1 0 30%;
 }
