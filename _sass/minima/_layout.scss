@@ -343,26 +343,49 @@
 /**
  * main side content
  */
- .main-side-content {
-  display: flex;
-  flex-direction: row;
-  min-height: 50vh;
-  min-width: 800px;
-}
+.main-side-content {
+  display: block;
 
-/**
- * main content
- */
-.main-content {
-  display: flex;
-  flex: 1 0 70%;
-}
+  /**
+  * main content
+  */
+  .main-content {
+    display: flex;
+    flex: 1 0 100%;
+  }
 
 
-/**
- * side content
- */
- .side-content {
-  display: flex;
-  flex: 1 0 30%;
+  /**
+  * side content
+  */
+  .side-content {
+    display: none;
+    // flex: 1 0 30%;
+  }
+
+  @media screen and (min-width: $on-large) {
+
+    display: flex;
+    flex-direction: row;
+    min-height: 50vh;
+    min-width: 800px;
+  
+  
+    /**
+    * main content
+    */
+    .main-content {
+      display: flex;
+      flex: 1 0 70%;
+    }
+  
+  
+    /**
+    * side content
+    */
+    .side-content {
+      display: flex;
+      flex: 1 0 20%;
+    }
+  }    
 }
