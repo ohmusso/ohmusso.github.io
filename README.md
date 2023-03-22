@@ -8,7 +8,7 @@ command: bundle exec jekyll serve
 
 or
 
-bundle command: exec jekyll serve --draft
+bundle command: bundle exec jekyll serve --draft
 
 #### if error "cannot load such file -- webrick (LoadError)"
 
