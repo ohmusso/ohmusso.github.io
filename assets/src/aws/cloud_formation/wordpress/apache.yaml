@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'ec2 instance'
+
+Parameters:
+  KeyName:
+    Type: String
+    Description: KeyPair Name 
+  SubnetId:
+    Type: String
+    Description: Subnet ID
+  SecurityGroupId:
+    Type: String
+    Description: SecurityGroup ID
+
+Resources:
+  EC2Instance:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: 'ami-0f310fced6141e627' # Amazon Linux2
+      InstanceType: 't2.micro'
+      BlockDeviceMappings:
+        - DeviceName: '/dev/xvda'
+          Ebs:
+            VolumeType: 'gp2'
+            DeleteOnTermination: true
+            VolumeSize: 8
+      InstanceInitiatedShutdownBehavior: 'stop'
+      KeyName: !Ref KeyName
+      Monitoring: false
+      SecurityGroupIds:
+        - !Ref SecurityGroupId
+      SubnetId: !Ref SubnetId
+      Tenancy: 'default'
+##!/bin/bash -xe
+#cp /var/www/html/wordpress/wp-config-sample.php /var/www/html/wordpress/wp-config.php
+#sed -i s/database_name_here/DBName/g wp-config.php
+#sed -i s/username_here/DBUser/g wp-config.php
+#sed -i s/password_here/DBPassword/g wp-config.php
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          sudo su
+          yum update -y
+          # apache
+          yum install -y httpd
+          ## give parmission to apache
+          usermod -a -G apache ec2-user
+          chown -R ec2-user:apache /var/www
+          chmod -R g+wrxs /var/www
+          # php
+          amazon-linux-extras install -y php8.2
+          # apache run
+          systemctl start httpd
+          systemctl enable httpd
+          # wordpress
+          wget http://ja.wordpress.org/latest-ja.tar.gz
+          tar -xzf latest-ja.tar.gz
+          cp -r wordpress/* /var/www/html/
+      Tags:
+        - Key: 'Name'
+          Value: !Sub '${AWS::StackName}'
+  EIP:
+    Type: AWS::EC2::EIP
+    Properties: 
+      InstanceId: !Ref EC2Instance
+      Tags:
+        - Key: 'Name'
+          Value: !Sub '${AWS::StackName}'
+
+Outputs:
+  EC2InstanceId:
+    Value: !Ref EC2Instance
+    Description: EC2InstanceId of Apache Server

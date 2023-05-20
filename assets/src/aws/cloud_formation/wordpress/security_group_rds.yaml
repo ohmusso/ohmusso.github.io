@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'rds security groups'
+
+Parameters:
+  VPCId:
+    Type: String
+    Description: VPC ID 
+  SourceSecurityGroupId:
+    Type: String
+    Description: SecurityGroup ID of the connection server
+
+Resources:
+  SecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: 'security group for mysql(rds)'
+      VpcId: !Ref VPCId
+      Tags:
+        - Key: 'Name'
+          Value: !Sub '${AWS::StackName}'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          SourceSecurityGroupId: !Ref SourceSecurityGroupId
+
+Outputs:
+  SecurityGroupId:
+    Value: !GetAtt SecurityGroup.GroupId
+    Description: SecurityGroup id

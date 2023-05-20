@@ -1,0 +1,70 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'Application Load Balancer'
+
+Parameters:
+  VpcId:
+    Type: String
+    Description: VPC ID
+  EC2InstanceIdMain:
+    Type: String
+    Description: Main EC2Instance ID
+  SecurityGroupId:
+    Type: String
+    Description: SecurityGroup ID
+  SubnetIds:
+    Type: CommaDelimitedList
+    Description: Subnet IDs
+
+Resources:
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthCheckPath: /
+      HealthCheckPort: '80'
+      HealthCheckProtocol: HTTP
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      IpAddressType: ipv4
+      Matcher: 
+        HttpCode: '200'
+      Port: 80
+      Protocol: 'HTTP'
+      ProtocolVersion: 'HTTP1'
+      Tags: 
+        - Key: 'Name'
+          Value: !Sub '${AWS::StackName}'
+      Targets: 
+        - Id: !Ref EC2InstanceIdMain
+          Port: 80
+      TargetType: instance
+      VpcId: !Ref VpcId
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties: 
+      Type: application
+      IpAddressType: ipv4
+      Scheme: internet-facing
+      SecurityGroups: 
+        - !Ref SecurityGroupId
+      Subnets: !Ref SubnetIds
+      Tags: 
+        - Key: 'Name'
+          Value: !Sub '${AWS::StackName}'
+  Listener: 
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties: 
+      DefaultActions:
+        - TargetGroupArn: !Ref TargetGroup
+          Type: forward
+      LoadBalancerArn: !Ref ALB
+      Port: 80
+      Protocol: HTTP
+
+Outputs:
+  DNSName:
+    Value: !GetAtt ALB.DNSName
+    Description: DNSName of ALB

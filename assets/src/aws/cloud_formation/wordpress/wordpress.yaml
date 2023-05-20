@@ -1,0 +1,150 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'wordpress'
+
+Parameters:
+  KeyName:
+    Type: 'AWS::EC2::KeyPair::KeyName'
+  DbName:
+    Type: String
+    Description: Database Name
+  DbMasterUsername:
+    Type: String
+    Description: Database user name
+  DbMasterUserpassword:
+    Type: String
+    Description: Database user password
+
+Resources:
+  # VPC
+  VPC:
+    Type: 'AWS::CloudFormation::Stack'
+    DeletionPolicy: Delete
+    Properties:
+      TemplateURL: >-
+        https://wordpress-template.s3.ap-northeast-1.amazonaws.com/vpc.yaml
+  # Public Subnet Main
+  PublicSubnetMain:
+    Type: 'AWS::CloudFormation::Stack'
+    DeletionPolicy: Delete
+    Properties:
+      TemplateURL: >-
+        https://wordpress-template.s3.ap-northeast-1.amazonaws.com/public_subnet.yaml
+      Parameters:
+        VPCId: !GetAtt VPC.Outputs.VPCId
+        InternetGatewayId: !GetAtt VPC.Outputs.InternetGatewayId
+        AvailabilityZone: ap-northeast-1a 
+        CidrBlock: '10.0.0.0/24'
+  # Private Subnet Main
+  PrivateSubnetMain:
+    Type: 'AWS::CloudFormation::Stack'
+    DeletionPolicy: Delete
+    Properties:
+      TemplateURL: >-
+        https://wordpress-template.s3.ap-northeast-1.amazonaws.com/private_subnet.yaml
+      Parameters:
+        VPCId: !GetAtt VPC.Outputs.VPCId
+        AvailabilityZone: ap-northeast-1a
+        CidrBlock: '10.0.1.0/24'
+  # Public Subnet Sub
+  PublicSubnetSub:
+    Type: 'AWS::CloudFormation::Stack'
+    DeletionPolicy: Delete
+    Properties:
+      TemplateURL: >-
+        https://wordpress-template.s3.ap-northeast-1.amazonaws.com/public_subnet.yaml
+      Parameters:
+        VPCId: !GetAtt VPC.Outputs.VPCId
+        InternetGatewayId: !GetAtt VPC.Outputs.InternetGatewayId
+        AvailabilityZone: ap-northeast-1c
+        CidrBlock: '10.0.2.0/24'
+  # Private Subnet Sub
+  PrivateSubnetSub:
+    Type: 'AWS::CloudFormation::Stack'
+    DeletionPolicy: Delete
+    Properties:
+      TemplateURL: >-
+        https://wordpress-template.s3.ap-northeast-1.amazonaws.com/private_subnet.yaml
+      Parameters:
+        VPCId: !GetAtt VPC.Outputs.VPCId
+        AvailabilityZone: ap-northeast-1c
+        CidrBlock: '10.0.3.0/24'
+  # Security Group for ALB
+  SecurityGroupALB:
+    Type: 'AWS::CloudFormation::Stack'
+    DeletionPolicy: Delete
+    Properties:
+      TemplateURL: >-
+        https://wordpress-template.s3.ap-northeast-1.amazonaws.com/security_group_alb.yaml
+      Parameters:
+        VPCId: !GetAtt VPC.Outputs.VPCId
+  # Security Group for Apache Server 
+  SecurityGroupApache:
+    Type: 'AWS::CloudFormation::Stack'
+    DeletionPolicy: Delete
+    Properties:
+      TemplateURL: >-
+        https://wordpress-template.s3.ap-northeast-1.amazonaws.com/security_group_apache.yaml
+      Parameters:
+        VPCId: !GetAtt VPC.Outputs.VPCId
+        SecurityGroupALBId: !GetAtt SecurityGroupALB.Outputs.SecurityGroupId
+  # Security Group for MySQL in RDS
+  SecurityGroupMySQL:
+    Type: 'AWS::CloudFormation::Stack'
+    DeletionPolicy: Delete
+    Properties:
+      TemplateURL: >-
+        https://wordpress-template.s3.ap-northeast-1.amazonaws.com/security_group_rds.yaml
+      Parameters:
+        VPCId: !GetAtt VPC.Outputs.VPCId
+        SourceSecurityGroupId: !GetAtt SecurityGroupApache.Outputs.SecurityGroupId
+  # MySQL(RDS)
+  MySQL:
+    Type: 'AWS::CloudFormation::Stack'
+    DeletionPolicy: Delete
+    Properties:
+      TemplateURL: >-
+        https://wordpress-template.s3.ap-northeast-1.amazonaws.com/rds_mysql.yaml
+      Parameters:
+        DbName: !Ref DbName
+        DbMasterUsername: !Ref DbMasterUsername
+        DbMasterUserpassword: !Ref DbMasterUserpassword
+        SecurityGroupId: !GetAtt SecurityGroupMySQL.Outputs.SecurityGroupId
+        SubnetIds: !Join
+          - ','
+          - - !GetAtt PublicSubnetMain.Outputs.SubnetId
+            - !GetAtt PublicSubnetSub.Outputs.SubnetId
+  # Apache(EC2) Main
+  ApacheMain:
+    Type: 'AWS::CloudFormation::Stack'
+    DeletionPolicy: Delete
+    Properties:
+      TemplateURL: >-
+        https://wordpress-template.s3.ap-northeast-1.amazonaws.com/apache.yaml
+      Parameters:
+        KeyName: !Ref KeyName
+        SubnetId: !GetAtt PublicSubnetMain.Outputs.SubnetId
+        SecurityGroupId: !GetAtt SecurityGroupApache.Outputs.SecurityGroupId
+  # ApplicationLoadBalancer
+  ApplicationLoadBalancer:
+    Type: 'AWS::CloudFormation::Stack'
+    DeletionPolicy: Delete
+    Properties:
+      TemplateURL: >-
+        https://wordpress-template.s3.ap-northeast-1.amazonaws.com/elb_alb.yaml
+      Parameters:
+        VpcId: !GetAtt VPC.Outputs.VPCId
+        EC2InstanceIdMain: !GetAtt ApacheMain.Outputs.EC2InstanceId
+        SecurityGroupId: !GetAtt SecurityGroupALB.Outputs.SecurityGroupId
+        SubnetIds: !Join
+          - ','
+          - - !GetAtt PublicSubnetMain.Outputs.SubnetId
+            - !GetAtt PublicSubnetSub.Outputs.SubnetId
+
+Outputs:
+  ALBDNSName:
+    Value: !GetAtt ApplicationLoadBalancer.Outputs.DNSName
+    Description: DNSName of ApplicationLoadBalancer.
+  DBInstanceEndpointAddress:
+    Value: !GetAtt MySQL.Outputs.DBInstanceEndpointAddress
+    Description: DbInstance Endpoint Address. Set this to database host name of Wordpress.

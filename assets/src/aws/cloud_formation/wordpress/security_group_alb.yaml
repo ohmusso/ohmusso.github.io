@@ -1,0 +1,28 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'security group for Application Load Balancer'
+
+Parameters:
+  VPCId:
+    Type: String
+    Description: VPC ID 
+
+Resources:
+  SecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: 'security group for Application Load Balancer'
+      VpcId: !Ref VPCId
+      Tags:
+        - Key: 'Name'
+          Value: !Sub '${AWS::StackName}'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: '0.0.0.0/0'
+
+Outputs:
+  SecurityGroupId:
+    Value: !GetAtt SecurityGroup.GroupId
+    Description: SecurityGroup id

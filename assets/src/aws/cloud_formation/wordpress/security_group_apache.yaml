@@ -1,0 +1,35 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'wordpress security groups'
+
+Parameters:
+  VPCId:
+    Type: String
+    Description: VPC ID 
+  SecurityGroupALBId:
+    Type: String
+    Description: SecurityGroup ID of the Application Load Balancer
+
+Resources:
+  SecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: 'security group for apache'
+      VpcId: !Ref VPCId
+      Tags:
+        - Key: 'Name'
+          Value: !Sub '${AWS::StackName}'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: '0.0.0.0/0'
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !Ref SecurityGroupALBId
+
+Outputs:
+  SecurityGroupId:
+    Value: !GetAtt SecurityGroup.GroupId
+    Description: SecurityGroup id

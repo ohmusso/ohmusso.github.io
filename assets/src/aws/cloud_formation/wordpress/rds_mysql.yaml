@@ -1,0 +1,67 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'MySQL Database Instance'
+
+Parameters:
+  DbName:
+    Type: String
+    Description: Database Name
+  DbMasterUsername:
+    Type: String
+    Description: Database user name
+  DbMasterUserpassword:
+    Type: String
+    Description: Database user password
+  SecurityGroupId:
+    Type: String
+    Description: RDS SecurityGroup ID
+  SubnetIds:
+    Type: CommaDelimitedList
+    Description: Subnet IDs
+
+Resources:
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties: 
+      DBSubnetGroupDescription: DB Subnet Group for wordpress
+      DBSubnetGroupName: !Sub wordpress-db-subnet-group
+      SubnetIds: !Ref SubnetIds
+      Tags: 
+        - Key: Name
+          Value: !Sub '${AWS::StackName}'
+  DBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties: 
+      StorageType: gp2
+      AllocatedStorage: '20'
+      MaxAllocatedStorage: '20'
+      AllowMajorVersionUpgrade: true
+      AutoMinorVersionUpgrade: true
+      AvailabilityZone: ap-northeast-1a
+      BackupRetentionPeriod: 0  # disable auto backup
+      DBInstanceClass: db.t3.micro
+      DBInstanceIdentifier: wordpress-mysql
+      DBName: !Ref DbName
+      VPCSecurityGroups:
+        - !Ref SecurityGroupId
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      DeleteAutomatedBackups: true
+      DeletionProtection: false
+      Engine: mysql
+      EngineVersion: '8.0.32'
+      ManageMasterUserPassword: false
+      MasterUsername: !Ref DbMasterUsername
+      MasterUserPassword: !Ref DbMasterUserpassword
+      MultiAZ: false
+      NetworkType: IPV4
+      Port: '3306'
+      PubliclyAccessible: false
+      StorageEncrypted: true # not specify KmsKeyId, so uses dafault KMS key
+      Tags: 
+        - Key: Name
+          Value: !Sub '${AWS::StackName}'
+
+Outputs:
+  DBInstanceEndpointAddress:
+    Value: !GetAtt DBInstance.Endpoint.Address
+    Description: DBInstance Endpoint Address
