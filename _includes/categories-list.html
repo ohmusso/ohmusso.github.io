@@ -1,6 +1,7 @@
 <div class="categories-list">
     {% for cat in site.categories %}
-    <!-- <h3>{{ tag[0] }}</h3> -->
+    <!-- cat[0]: category name, cat[1]: category items in posts -->
+    <h3>{{ cat[0] }}</h3>
     <ul>
       {% for post in cat[1] %}
         <li><a href="{{ post.url }}">{{ post.title }}</a></li>
@@ -8,4 +9,3 @@
     </ul>
   {% endfor %}
 </div>
-

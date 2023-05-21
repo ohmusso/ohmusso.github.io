@@ -2,7 +2,7 @@
 layout: post
 title:  意思決定
 date:   2023-03-07 00:00:00 +0900
-categories: book
+categories: Management
 tags: how-google-works management
 ---
 

@@ -2,7 +2,7 @@
 layout: post
 title:  スマートクリエイティブ
 date:   2023-02-25 23:00:00 +0900
-categories: book
+categories: Management
 tags: how-google-works management
 ---
 
