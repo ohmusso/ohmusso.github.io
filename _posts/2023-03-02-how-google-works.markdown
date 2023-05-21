@@ -2,7 +2,7 @@
 layout: post
 title:  人材
 date:   2023-03-02 20:00:00 +0900
-categories: book
+categories: Management
 tags: how-google-works management
 ---
 

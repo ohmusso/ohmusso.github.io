@@ -2,7 +2,7 @@
 layout: post
 title:  Docker Get started での mysql
 date:   2023-03-22 22:00:00 +0900
-categories: how-to
+categories: How-To
 tags: mysql docker
 ---
 

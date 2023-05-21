@@ -2,7 +2,7 @@
 layout: post
 title:  jekyll mermaid
 date:   2023-03-05 22:30:00 +0900
-categories: jekyll
+categories: Jekyll
 tags: jekyll mermaid javascript
 mermaid: true
 ---

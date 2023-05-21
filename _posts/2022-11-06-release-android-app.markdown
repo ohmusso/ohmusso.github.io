@@ -2,7 +2,7 @@
 layout: post
 title:  "Release Andoroid App 'landatch'"
 date:   2022-11-06 12:00:00 +0900
-categories: info
+categories: Info
 ---
 
 ## landatch

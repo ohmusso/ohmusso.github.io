@@ -54,3 +54,6 @@ plugins:
 
 minima:
   skin: auto # assets\css\style.css
+
+# site.google_analytics == true
+google_analytics: true

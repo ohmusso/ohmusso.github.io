@@ -2,7 +2,7 @@
 layout: post
 title:  Autosar EcuM 5.2. Peripherals with Wakeup Capability
 date:   2023-03-04 23:00:00 +0900
-categories: autosar
+categories: Autosar
 tags: R19-11 ecum driver
 ---
 

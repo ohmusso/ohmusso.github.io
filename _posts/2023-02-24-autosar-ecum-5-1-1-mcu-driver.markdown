@@ -2,7 +2,7 @@
 layout: post
 title:  Autosar EcuM 5.1. SPAL Modules
 date:   2023-02-24 23:00:00 +0900
-categories: autosar
+categories: Autosar
 tags: R19-11 ecum driver
 ---
 
