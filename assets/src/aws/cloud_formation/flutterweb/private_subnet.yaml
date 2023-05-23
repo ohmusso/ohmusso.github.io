@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'public subnet'
+
+Parameters:
+  VPCId:
+    Type: String
+    Description: VPC ID 
+  AvailabilityZone:
+    Type: String
+    Default: ap-northeast-1a
+    AllowedValues:
+      - ap-northeast-1a
+      - ap-northeast-1c
+    Description: Availablity Zone in Tokyo region 
+  CidrBlock:
+    Type: String
+    AllowedPattern : '^(([1-9]?[0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([1-9]?[0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])/([0-9]|1[0-9]|2[0-9]|3[0-2])$'
+    Description: Subnet CidrBlock
+
+Resources:
+  # private subnet(don't have route to internet gateway in route table)
+  Subnet:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      AvailabilityZone: !Ref AvailabilityZone
+      CidrBlock: !Ref CidrBlock
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref VPCId
+      Tags:
+        - Key: 'Name'
+          Value: !Sub '${AWS::StackName}'
+  # private route
+  RouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPCId
+      Tags:
+        - Key: 'Name'
+          Value: !Sub '${AWS::StackName}-RouteTable'
+  SubnetRouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref Subnet
+
+Outputs:
+  SubnetId:
+    Value: !Ref Subnet
+    Description: Private Subnet Id
