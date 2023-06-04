@@ -28,6 +28,11 @@ Resources:
           FromPort: 80
           ToPort: 80
           SourceSecurityGroupId: !Ref SecurityGroupALBId
+        # Jenkins
+        - IpProtocol: tcp
+          FromPort: 8443
+          ToPort: 8443
+          CidrIp: '0.0.0.0/0'
 
 Outputs:
   SecurityGroupId:
