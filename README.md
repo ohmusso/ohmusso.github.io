@@ -4,11 +4,15 @@
 
 ### local test
 
-command: bundle exec jekyll serve
+``` powershell
+bundle exec jekyll serve
+```
 
 or
 
+``` powershell
 bundle command: bundle exec jekyll serve --draft
+```
 
 #### if error "cannot load such file -- webrick (LoadError)"
 

@@ -2,7 +2,8 @@
 layout: post
 title:  Flutter WebをAmazon Linux2でホスト
 date:   2023-5-27 14:00:00 +0900
-categories: aws flutter 
+categories: How-To
+tags: aws flutter
 ---
 
 いろいろなやり方があると思います。
