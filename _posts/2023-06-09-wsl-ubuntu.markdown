@@ -1,9 +1,9 @@
 ---
 layout: post
 title:  WSL2でUbuntu
-date:   2023-06-09 21:00:00 +0900
+date:   2023-06-10 12:00:00 +0900
 categories: How-To
-tags: aws linux flutter
+tags: docker wsl
 ---
 
 ## 目的
