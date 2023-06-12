@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  AWS Linux Flutter Webをビルド
-date:   2023-xx-xx 22:00:00 +0900
+date:   2023-06-15 22:00:00 +0900
 categories: aws
 tags: aws linux flutter
 ---
