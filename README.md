@@ -1,4 +1,4 @@
-# ohmusso.github.io
+# github.io
 
 ## jekyll info
 
