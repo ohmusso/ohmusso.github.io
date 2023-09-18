@@ -45,8 +45,8 @@ MCUでのポートは以下になります。
 pin34 PB13
 
 > UM: 6.4 LEDs  
-> User LD2: the green LED is a user LED connected to ARDUINO® signal D13 corresponding 
-to STM32 I/O PA5 (pin 21) or PB13 (pin 34) depending on the STM32 target. Refer to 
+> User LD2: the green LED is a user LED connected to ARDUINO® signal D13 corresponding  
+to STM32 I/O PA5 (pin 21) or PB13 (pin 34) depending on the STM32 target. Refer to  
 Table 11 to Table 23 when
 
 ## 開発環境
@@ -97,7 +97,9 @@ ex) Path: C:\Program Files\ninja
 
 ここではフォルダ構成のみ説明します。
 
-各コードの説明は別の記事に記載します。
+コードの説明は以下の記事に記載します。
+
+[コードの説明]({% link _posts/2023-09-12-NUCLEO-F302R8-BlinkLED.markdown %})
 
 ```txt
 |--CMakeList.txt: CMakeのスクリプト。
