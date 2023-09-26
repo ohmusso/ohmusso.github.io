@@ -1,0 +1,115 @@
+---
+layout: post
+title:  NUCLEO-F302R8 UART
+date:   2023-09-26 20:00:00 +0900
+categories: NUCLEO-F302R8
+tags: stm32 arm
+---
+
+LEDチカチカの続きです。今回はUARTでPCにデータを送信できるようにします。
+
+[LEDチカチカ]({% link _posts/2023-09-09-NUCLEO-F302R8-BlinkLED.markdown %})
+
+## リファレンス
+
+マイコンのRM(リファレンスマニュアル)とDS(データシート)を参照します。
+
+RM: <https://www.st.com/resource/en/reference_manual/rm0365-stm32f302xbcde-and-stm32f302x68-advanced-armbased-32bit-mcus-stmicroelectronics.pdf>
+
+DS: <https://www.st.com/resource/en/datasheet/stm32f302r6.pdf>
+
+## 構成
+
+![uartの構成](/assets/images/image-2023-09-26-uart-structure.png)
+
+### UART2
+
+* Bus: APB1
+* PA2: TX
+* PA3: RX
+  * PA2,3共にAF7(Alternate functions for Port A 0x7)で使用
+
+## 初期化
+
+### Clock
+
+* RCC_AHBENR: IOPAEN Enable 1b
+  * USART2でPA2,3を使用するので、GPIOAのクロックを有効にします。
+* RCC_APB1ENR: USERT2 Enable 1b
+  * USERT2のクロックを有効にします。
+* RCC_CFGR3: USART2SW PCLK 00b
+  * クロックを選択できます。デフォルトのPCLK(Peripherals Clock)を使用します。ただし、F320R8ではクロックの選択できないと記載があります。
+
+### GPIOA
+
+* GPIOx_MODER
+  * MODER2: Alternate function mode 10b
+  * MODER3: Alternate function mode 10b
+    * GPIOをUARTのような機能として使用する場合はAF(Alternate function) を設定します。
+* GPIOx_AFRL
+  * AFR2: AF7 USART2_TX 0111b
+  * AFR3: AF7 USART2_RX 0111b
+    * MODERをAFに設定したポートで使用する機能を選択します。何がそのポートで使えるかは以下のデータシートを参照してください。
+
+> Alternate functions  
+> DS: Table 14. Alternate functions for Port A
+
+### UART
+
+* USART_CR1
+  * M1:  1 start bit, 8 data bits, n stop bits 00b
+  * M0:  1 start bit, 8 data bits, n stop bits 00b
+    * 1フレームのビット長を設定します。2bitの値ですが、bitがM1とM0に分かれています。
+  * OVER8: Oversampling by 16 0b
+    * 1bitの値を判定するためのサンプリング回数を設定します。
+  * TE: Transmitter is enabled 1b
+    * 送信を有効にします。
+  * RE: Receiver is enabled 1b
+    * 受信を有効にします。
+  * UE: USART enabled 1b
+    * UARTが有効になります。
+* USART_CR2
+  * STOP: 1stop bit 00b
+    * ストップビットの数です。
+* USART_BRR
+  * BRR: 9600[bps] 0341h
+    * ボーレートを設定します。ただ、ボーレートそのものを設定するのではなく、USARTDIV(1bitの時間幅)を設定します。今回の設定では以下のようにUSARTDIVが計算されます。式の詳細は以下に記載したRMを見てください。
+    * USARTDIV = fck / ボーレート = 8MHz / 9600 = 833(少数は四捨五入) = 0x0341
+
+> oversampling  
+> RM: Selecting the clock source and the proper oversampling method  
+> ボーレート  
+> RM: 29.5.4 USART baud rate generation  
+> USARTDIVの算出はExample1と全く同じです。
+
+## UART送信
+
+1秒周期で1Byteの文字(asciiコード a,b,c)をPCに送信します。
+
+* USART_TDR: TDR
+  * 送信データレジスタです。値を書き込むと、送信されます。
+* USART_ISR: TXE
+  * TDRの状態を示すレジスタです。0だと送信中、1だと送信完了になります。今回は1秒周期で1Byte送信するだけなので使っていません。複数Byteを送信する場合、TXEが1になるまで待ってからTDRに書き込みます。
+
+[コード: uart送信](https://github.com/ohmusso/NUCLEO-F302R8/compare/main...uart#diff-e0cf5b28d9b6b600f0af2bc78e8fd30ec675fd731a5da86f0c4283ffc0e40176)
+
+## UART受信
+
+メモです。今回のコードで受信処理は実装していません。
+
+* USART_RDR: RDR
+  * 受信データレジスタです。受信したデータが格納されます。
+* USART_ISR: RXNE
+  * RDRの状態を示すレジスタです。0だとデータが空、1だとデータありで読み出し可能です。RDRを読みだすと、RXNEはHWにより0にセットされます。
+
+## テスト
+
+Tera TermでSTM32からデータを受信できるか確認します。
+
+以下のgifのようになります。
+
+ST-LINKで書き込めているなら、ST-LINKのCOMポートがTera Termで選択できると思います。選択できない場合はSTM32のVCPドライバをインストールしてください。
+
+![uartでの通信](/assets/images/image-2023-09-26-uart-test.gif)
+
+## 以上

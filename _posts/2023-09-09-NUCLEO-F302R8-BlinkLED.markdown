@@ -149,3 +149,7 @@ buildフォルダのsample.binがLEDチカチカプログラムで、これを�
 書き込みが完了して、LD2がチカチカすればOKです。
 
 ## 以上
+
+次はUARTを実装しました。
+
+[UART]({% link _posts/2023-09-26-NUCLEO-F302R8-uart.markdown %})
