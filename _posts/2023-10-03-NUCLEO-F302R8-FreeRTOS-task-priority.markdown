@@ -69,6 +69,32 @@ Blockedはタスクの状態の一つです。以下のページを見てくだ�
 
 ![uartでの通信](/assets/images/image-2023-10-03-freertos-task-test.gif)
 
-## 以上
+## タスクの優先度を同じにすると
 
-次は優先度が同じタスクが複数ある場合を試します。
+以下のコードのように、同じ優先度のタスクを作った場合の動きを確認します。
+
+``` c
+void taskAppLow1() {
+    for (;;) {
+        uartSendChar = '1';
+    }
+}
+
+void taskAppLow2() {
+    for (;;) {
+        uartSendChar = '2';
+    }
+}
+
+void taskAppLow3() {
+    for (;;) {
+        uartSendChar = '3';
+    }
+}
+```
+
+動作確認の結果です。ラウンドロビンで動いています。
+
+![uartでの通信](/assets/images/image-2023-10-04-freertos-samepriotask-test.gif)
+
+## 以上
