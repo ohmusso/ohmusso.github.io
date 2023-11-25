@@ -1,0 +1,57 @@
+---
+layout: post
+title:  NUCLEO-F302R8 3相BLDCモータ 6step
+date:   2023-11-25 20:00:00 +0900
+categories: NUCLEO-F302R8
+tags: stm32 arm
+---
+
+以下の書籍の開発キットを使用して、3相BLDCモータを回転させるプログラムを作ります。
+
+<https://shop.cqpub.co.jp/hanbai/books/48/48011.htm>
+
+前回、とりあえずモータを回転させるプログラムを作成しました。
+
+[前回: とりあえずモータを回転]({% link _posts/2023-10-08-NUCLEO-F302R8-mortor.markdown %})
+
+今回は6step制御という方法でモータを回します。
+
+### 6step制御
+
+以下のように回転する磁界を6ステップで作ります。
+
+ポイント
+
+* 反時計回りに磁界を発生させています。
+* 各ステップで1相をHigh-Z(イネーブル(EN)信号をLow)にして電流を流さないようにします。
+* 図では6stepで1回転していますが、実際には1回転ではなく、電気角の3相分に対応する機械角だけ回転します。以下の記事が分かりやすいです。
+  * <https://techweb.rohm.co.jp/trend/comics/16370/#section02>
+
+![6step](/assets/images/image-2023-11-25-motor-6step.png)
+
+### 3. タイミングチャート
+
+* 各stepの開始時にINxxとENxxの設定を行います。
+* FreeRTOSのvTaskDelayで一定時間待ってから次のstepを開始します。待ち時間が1stepの時間となり、モータの回転速度になります。
+* 使用しているモータは磁極が14極あるので、6step(U,V,Wを一周)で360度/(14/2)=51.4度回転します。1stepは51.4/6=8.57度になります。
+* 1秒間に1回転させたい場合の1stepの時間は約24msになります。
+
+![PWMのタイミングチャート](/assets/images/image-2023-11-25-motor-6step-timing-chart.png)'
+
+## コード
+
+<https://github.com/ohmusso/NUCLEO-F302R8/blob/mortor/src/app/app.c#L56C40-L56C40>
+
+## 動作確認
+
+* 回転数に合わせてPWMのDutyを調整しています。回転数が低いときはDutyを小さくして回転磁界の大きさを小さくします。そのほうがきれいに回ってくれました。
+
+<video controls width="100%" preload loop muted="true" src="/assets/movies/movie-2023-11-25-motor.mp4" type="video/mp4" >
+ Sorry, your browser doesn't support embedded videos.
+</video>
+
+## 次回
+
+* センサレス制御を行うために必要なAD変換を実装します。
+
+## 以上
