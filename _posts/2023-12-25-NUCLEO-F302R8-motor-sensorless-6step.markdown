@@ -59,16 +59,16 @@ tags: stm32 arm
 ### 回転速度
 
 rpm = 8.6° / 3664us \* 360° \* 60s = 389[rpm]
-![SW構成](/assets/images/image-2023-12-25-motor-sensorless-6step-bemf01.png)
+![389rpm](/assets/images/image-2023-12-25-motor-sensorless-6step-bemf01.png)
 
 rpm = 8.6° / 3027us \* 360° \* 60s = 471[rpm]
-![SW構成](/assets/images/image-2023-12-25-motor-sensorless-6step-bemf02.png)
+![471rpm](/assets/images/image-2023-12-25-motor-sensorless-6step-bemf02.png)
 
 rpm = 8.6° / 864us \* 360° \* 60s = 1653[rpm]
-![SW構成](/assets/images/image-2023-12-25-motor-sensorless-6step-bemf03.png)
+![1653rpm](/assets/images/image-2023-12-25-motor-sensorless-6step-bemf03.png)
 
 rpm = 8.6° / 431us \* 360° \* 60s = 3314[rpm]
-![SW構成](/assets/images/image-2023-12-25-motor-sensorless-6step-bemf04.png)
+![3314rpm](/assets/images/image-2023-12-25-motor-sensorless-6step-bemf04.png)
 
 <video controls width="100%" preload loop muted="true" src="/assets/movies/movie-2023-12-25-motor.mp4" type="video/mp4" >
  Sorry, your browser doesn't support embedded videos.
@@ -76,6 +76,6 @@ rpm = 8.6° / 431us \* 360° \* 60s = 3314[rpm]
 
 ## 次回
 
-次は回転速度の指令値を与えてPIDを行い、回線速度を制御してみます。
+次は回転速度の指令値を与えて、指令値の回線速度になるように制御します。
 
 ## 以上
