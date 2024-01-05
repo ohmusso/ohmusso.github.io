@@ -3,7 +3,7 @@ layout: post
 title:  NUCLEO-F302R8 FreeRTOS xTaskNotifyFromISR 
 date:   2023-12-17 20:00:00 +0900
 categories: NUCLEO-F302R8
-tags: stm32 arm
+tags: stm32 arm bldc
 ---
 
 xTaskNotifyFromISR の使用についてまとめた記事です。

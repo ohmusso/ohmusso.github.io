@@ -3,7 +3,7 @@ layout: post
 title:  NUCLEO-F302R8 BEMFのAD変換
 date:   2023-12-02 20:00:00 +0900
 categories: NUCLEO-F302R8
-tags: stm32 arm adc
+tags: stm32 arm adc bldc
 ---
 
 前回、とりあえずモータを回転させるプログラムを作成しました。

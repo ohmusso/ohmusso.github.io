@@ -3,7 +3,7 @@ layout: post
 title:  NUCLEO-F302R8 3相ブラシレスDCモータ
 date:   2023-10-08 20:00:00 +0900
 categories: NUCLEO-F302R8
-tags: stm32 arm
+tags: stm32 arm bldc
 ---
 
 以下の書籍の開発キットを使用して、3相ブラシレスDCモータを回転させるプログラムを作ります。

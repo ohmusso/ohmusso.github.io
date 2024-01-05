@@ -3,7 +3,7 @@ layout: post
 title:  NUCLEO-F302R8 STM32CubeMonitor
 date:   2023-12-10 20:00:00 +0900
 categories: NUCLEO-F302R8
-tags: stm32 arm adc
+tags: stm32 arm
 ---
 
 前回、ソフトウェアのトリガでAD変換を行うプログラムを作成しました。
