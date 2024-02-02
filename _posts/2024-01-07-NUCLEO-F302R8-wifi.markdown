@@ -1,0 +1,173 @@
+---
+layout: post
+title:  NUCLEO-F302R8 wifi
+date:   2024-02-02 23:00:00 +0900
+categories: NUCLEO-F302R8
+tags: stm32 arm bldc
+mermaid: true
+---
+
+wifiで通信することが目標です。
+
+NUCLEO-F302R8にwifiの機能はありません。ESP32-WROOM-32-DevKitCをUARTで繋ぎ、wifi機能を使用して通信をします。
+
+## リファレンス
+
+* マイコンのRM(リファレンスマニュアル)
+  * RM: <https://www.st.com/resource/en/reference_manual/rm0365-stm32f302xbcde-and-stm32f302x68-advanced-armbased-32bit-mcus-stmicroelectronics.pdf>
+  * マイコンの基本的な資料
+* マイコンのDS(データシート)
+  * DS: <https://www.st.com/resource/en/datasheet/stm32f302r6.pdf>
+  * マイコンのPin配置やポートの機能一覧、HW特性
+* マイコンのPM(プログラミングマニュアル)
+  * PM: <https://www.st.com/resource/ja/programming_manual/pm0214-stm32-cortexm4-mcus-and-mpus-programming-manual-stmicroelectronics.pdf>
+  * CPU、アセンブラ
+* ESP32 ATコマンド ユーザガイド
+  * AT: <https://docs.espressif.com/projects/esp-at/en/latest/esp32/index.html>
+
+## HW構成
+
+![HW構成](/assets/images/image-2024-01-14-wifi-hw.png)
+
+## ESP32-WROOM-32-DevKitCのセットアップ
+
+ESP32-WROOM-32-DevKitCをUART通信でATコマンドを送受信できるようにします。
+
+以下の記事を見てください。
+
+<https://rt-net.jp/mobility/archives/20230>
+
+### 記事の補足
+
+#### ESPセットアップ時のHW構成
+
+![ESPセットアップ HW構成](/assets/images/image-2024-01-14-wifi-hw-esp-setup.png)
+
+セットアップでPCからESPにATコマンドを送信するために超小型ＵＳＢシリアル変換モジュールを使用します。
+
+<https://akizukidenshi.com/catalog/g/g108461/>
+
+#### ESP32 書き込みツール
+
+* 書き込むファイル、アドレスを設定した後に左のチェックも入れること。
+![書き込みツールの設定](/assets/images/image-2024-01-14-wifi-flash-tool.png)
+
+### HWの接続
+
+* 超小型ＵＳＢシリアル変換モジュールにピンヘッダが付属しています。はんだ付けが必要です。
+* 超小型ＵＳＢシリアル変換モジュールから5Vが出力されます。ESP32-WROOM-32-DevKitCの5Vに入力できます。
+* Tx/Rxはクロスします。
+![HWの接続](/assets/images/image-2024-01-14-hw-connection.jpg)
+
+### ボーレートの設定
+
+ESP32のデフォルトのボーレートは115200ですが、9600に変更して使用します。
+
+9600で使用する理由は以下の通り。
+
+* このプロジェクトのF302R8のクロックをデフォルトの8MHzに設定しています。
+* UARTで使用するクロックも8MHzになり、115200のボーレートを設定するとエラーが発生して通信がまともにできなかったので。
+
+ボーレートは以下のコマンドで変更できます。
+
+``` serial
+AT+UART_DEF=<baudrate>,<databits>,<stopbits>,<parity>,<flow control>
+```
+
+<https://docs.espressif.com/projects/esp-at/en/latest/esp32/AT_Command_Set/Basic_AT_Commands.html#at-uart-def-default-uart-configuration-saved-in-flash>
+
+## SW構成
+
+FreeRTOSのTCPモジュールを使ってみます。
+
+![SW構成](/assets/images/image-2024-01-14-wifi-sw.png)
+
+<https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/releases/tag/V4.0.0>
+
+## FreeRTOS TCPモジュールの組み込み
+
+公式のチュートリアルをなぞります。
+
+<https://www.freertos.org/FreeRTOS-Plus/FreeRTOS_Plus_TCP/TCP_Networking_Tutorial.html>
+
+### Source Code Organisation
+
+読み物だけです。
+
+### Adding FreeRTOS-Plus-TCP To a FreeRTOS Project
+
+1. Add the following core FreeRTOS-Plus-TCP source files into your project  
+記載の通りソースをプロジェクトに追加します。
+1. Add the driver for your network interface (the MAC or Ethernet driver) into your project.  
+ここがメインです。外部のWIFIモジュールをUARTで動かすネットワークインターフェースがなかったので、ネットワークインターフェースを自作します。(後述)
+1. Add the common PHY handling implementation  
+PHYはイーサネットやWIFIの物理層のことです。このプロジェクトでは外部のWIFIモジュールを使用します。物理層を制御することはないため不要です。
+1. Add the following core TCP/IP directories into your compiler's include path  
+手順の通りにインクルードパスを追加します。
+1. Add a FreeRTOSIPConfig.h header file to your project  
+TCP/IPのコンフィグ設定を行います。IPv6で通信してみたいので、IPv6だけ使用する設定にしています。[FreeRTOSIPConfig.h](https://github.com/ohmusso/NUCLEO-F302R8/blob/wifi/FreeRTOSIPConfig.h "FreeRTOSIPConfig.h")
+
+### 補足
+
+TCPモジュールを含めてビルドしたときに発生した問題についてメモを残しておきます。
+
+* 標準ライブラリで使用されるシンボルが未定義でリンクエラーになる  
+ビルドすると次の記事のようなリンクエラーが発生します。[リンクエラー](https://assistc.hatenablog.jp/entry/gcc-undefined-reference "リンクエラー")  
+TCPモジュールでsnprintfが使われているところがあり、そこで標準ライブラリがリンクされてしまうようです。そこをコメントアウトするとビルドができました。[修正箇所](https://github.com/ohmusso/NUCLEO-F302R8/commit/fc82061a0da58ab1ee9332add614ec07131594e6 "修正箇所")  
+* .textセクションのサイズオーバー  
+ビルドするとF302R8のFlash(64KByte)に入りませんでした。原因はコンパイラの最適化をOFF(-O0)にしていたことでした。  
+最適化(-O1)を設定してビルドすると入りました。ただし、レジスタを使用しているコードは適宜Volatileを付けないと意図通りに動かなくなります。
+
+## コード
+
+確認用のATコマンドを送信して応答が返るところまで確認したコードです。
+
+<https://github.com/ohmusso/NUCLEO-F302R8/tree/7cf1f7d6fa36a06fa203cf499bba14603a1e50ca>
+
+### NetworkInterface
+
+自作したNetworkInterfaceは以下のコードになります。
+
+<https://github.com/ohmusso/NUCLEO-F302R8/blob/7cf1f7d6fa36a06fa203cf499bba14603a1e50ca/lib/FreeRTOS-Plus-TCP/portable/NetworkInterface/esp32_wifi_via_uart/NetworkInterface.c>
+
+### 初期化シーケンス
+
+```mermaid
+sequenceDiagram
+    %% participant
+    participant main
+    participant FreeRTOS-Plus-TCP
+    participant NetworkInterface
+    %% main
+    main->>+NetworkInterface: FillInterfaceDescriptor
+    NetworkInterface->>+FreeRTOS-Plus-TCP: FreeRTOS_AddNetworkInterface
+    main->>+FreeRTOS-Plus-TCP: FreeRTOS_FillEndPoint_IPv6
+    main->>+FreeRTOS-Plus-TCP: FreeRTOS_IPInit_Multi
+    FreeRTOS-Plus-TCP->>+FreeRTOS-Plus-TCP: xTaskCreate(prvIPTask) 
+    main->>+FreeRTOS-Plus-TCP: vTaskStartScheduler 
+    %% task wakeup
+    FreeRTOS-Plus-TCP->>+FreeRTOS-Plus-TCP: prvIPTask
+    FreeRTOS-Plus-TCP->>+NetworkInterface: xNetworkInterfaceInitialise
+    NetworkInterface->>+NetworkInterface: initialize uart driver
+    NetworkInterface->>+FreeRTOS-Plus-TCP: xTaskCreate(NetworkInterface task)
+```
+
+### 通常シーケンス
+
+```mermaid
+sequenceDiagram
+    %% participant
+    participant FreeRTOS-Plus-TCP
+    participant NetworkInterface
+    participant Uart
+    %% task wakeup
+    NetworkInterface->>+NetworkInterface: NetworkInterface task
+    NetworkInterface->>+Uart: send AT command
+    Uart->>+NetworkInterface: receive AT command response
+```
+
+## 次回
+
+PCとWifiで通信します。
+
+## 以上
