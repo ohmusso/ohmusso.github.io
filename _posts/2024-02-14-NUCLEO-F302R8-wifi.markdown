@@ -107,6 +107,10 @@ IDFではESP-NETIFのような機能のまとまりをコンポーネントと�
 
 IDFのESP-NETIF(\esp-idf-v5.1.2\components\esp_netif)をプロジェクトフォルダにコピーしてesp_netif_passthroughの追加をします。
 
+変更のコミットログです。
+
+<https://github.com/ohmusso/wifi_netif/commit/8fb5355a352e1f12ce39b5c9976f5ef323c9023c>
+
 ### Kconfigの修正
 
 コンポーネントにはKconfigというファイルがあります。これは idf.py menuconfig を実行したときに立ち上がるメニューから設定できる項目を記述したファイルです。
@@ -122,6 +126,10 @@ ESP-NETIFのKconfigにはTCP/IP Stack Libraryを選択する項目がありま�
 ビルドするファイルを記述しています。passthroughのCONFIG_XXXが有効の場合にesp_netif_passthrough.cがビルド対象となるように修正します。
 
 esp_netif_passthrough.cの中身は空です。
+
+KconfigとCMakeListsを変更したコミットログです。
+
+<https://github.com/ohmusso/wifi_netif/commit/c1eda44f0efc2bff969873252ffdc1f9a84ddca0>
 
 ## 次回
 
