@@ -1,0 +1,132 @@
+---
+layout: post
+title:  NUCLEO-F302R8 wifi ESP32の開発環境
+date:   2024-02-14 17:00:00 +0900
+categories: NUCLEO-F302R8
+tags: stm32 esp32
+mermaid: true
+---
+
+wifiで通信することが目標です。
+
+NUCLEO-F302R8にwifiの機能はありません。ESP32-WROOM-32-DevKitCをUARTで繋ぎ、wifi機能を使用して通信をします。
+
+前回、ESP32にUARTでATコマンドを送信できるところまで確認しました。
+
+[前回: ATコマンド]({% link _posts/2024-01-07-NUCLEO-F302R8-wifi.markdown %})
+
+続いてWIFIの通信を試してみたのですが、やりたいことができなかったです。
+
+■やりたかったこと  
+
+WIFIのパケットだけ送信したい。TCP/IPのパケットはFreeRTOSのTCPモジュールで作る。
+
+ATコマンドのリファレンスを見ていると、WIFIパススルーモードがあった。これで行けそう。
+
+<https://docs.espressif.com/projects/esp-at/en/latest/esp32/index_of_abbreviations.html#term-Passthrough-Mode>
+
+■試した結果
+
+パススルーモードに遷移するコマンドを送信するとエラーになった。リファレンスをよく見るとTCP/UDPのコネクションが必要だった。
+
+TCP/IPのパケットはFreeRTOSのTCPモジュールで作るので、ESP32で作ってほしくない。
+
+■解決方法
+
+ESP32で自作のUART-WIFIのプログラムを作成します。
+
+調査してみるとプログラムが作れそうな感じでした。
+
+* ATコマンドのファームウェアは非公開。ATコマンドのファームウェアでは実現できない。
+* ESP32-IDF(SDKみたいなもの)のサンプルコードにWIFIのステーションモードがありました。これを改造して作れそうでした。  
+  <https://github.com/espressif/esp-idf/tree/v5.1.2/examples/wifi/getting_started/station>
+* サンプルコードもFreeRTOSを使っていたので、馴染みやすそう。
+
+STMは中断でESP32のプログラミングを行っていきます。今回はESP32の開発環境について説明します。
+
+## リファレンス
+
+STM32
+
+* マイコンのRM(リファレンスマニュアル)
+  * RM: <https://www.st.com/resource/en/reference_manual/rm0365-stm32f302xbcde-and-stm32f302x68-advanced-armbased-32bit-mcus-stmicroelectronics.pdf>
+  * マイコンの基本的な資料
+* マイコンのDS(データシート)
+  * DS: <https://www.st.com/resource/en/datasheet/stm32f302r6.pdf>
+  * マイコンのPin配置やポートの機能一覧、HW特性
+* マイコンのPM(プログラミングマニュアル)
+  * PM: <https://www.st.com/resource/ja/programming_manual/pm0214-stm32-cortexm4-mcus-and-mpus-programming-manual-stmicroelectronics.pdf>
+  * CPU、アセンブラ
+
+ESP32
+
+* ESP32-IDF プログラミングガイド
+  * ESP-IDF: <https://docs.espressif.com/projects/esp-idf/en/stable/esp32/index.html>
+* ESP32-DevKitC-32E データシート
+  * ESP-DS: <https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32e_esp32-wroom-32ue_datasheet_en.pdf>
+
+## ESP32-IDFのセットアップ
+
+以下の記事を見てください。
+
+<https://dev.classmethod.jp/articles/a-little-careful-explanation-of-installing-the-esp32-development-environment-esp-idf/>
+
+私がインストールしたIDFのバージョン: esp-idf-v5.1.2
+
+## WIFIサンプルコード
+
+IDFのサンプルコードにWIFIステーションモードがあります。
+
+\examples\wifi\getting_started\station
+
+このコードをベースにします。これでWIFIパケットの送信ができて、あとはUARTでSTMと通信するコードを実装するだけでよいかと期待していました。しかし、以下のような課題がありました。
+
+* stationモードでアクセスポイントに接続するまでのコードになっています。データの送受信は実装されていません。
+* データの送受信はESP-NETIFというコンポーネントで抽象化されます。IDFには以下の2つのESP-NETIFが用意されています。
+  今回使用するWIFIステーションモードのサンプルはESP-NETIFにlwipを使用します。私のやりたいことではTCP/IPプロトコルスタックは不要となります。
+  * lwip: 軽量なTCP/IPプロトコルスタック
+  * loopback: 名前の通り。
+
+以上より、自作のESP-NETIFコンポーネントを作成します。
+
+## 自作のESP-NETIFコンポーネントの作成
+
+公式に以下のような自作コンポーネント作成に関する記載があります。
+
+<https://github.com/espressif/esp-idf/tree/master/components/esp_netif_stack#configure-esp-netif-for-building-without-lwip>
+
+この手順に沿ってesp_netif_passthroughという自作ESP-NETIFを作成します。
+
+### コンポーネントのオーバーライド
+
+IDFではESP-NETIFのような機能のまとまりをコンポーネントと言います。前述したlwip、loopbackもESP-NETIFというコンポーネントに含まれます。
+
+コンポーネントはオーバーライドすることができます。IDFにあるコンポーネントをプロジェクトフォルダにコピーして変更すると、プロジェクトにあるコンポーネントがビルドされます。
+
+<https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-guides/build-system.html#multiple-components-with-the-same-name>
+
+IDFのESP-NETIF(\esp-idf-v5.1.2\components\esp_netif)をプロジェクトフォルダにコピーしてesp_netif_passthroughの追加をします。
+
+### Kconfigの修正
+
+コンポーネントにはKconfigというファイルがあります。これは idf.py menuconfig を実行したときに立ち上がるメニューから設定できる項目を記述したファイルです。
+
+ESP-NETIFのKconfigにはTCP/IP Stack Libraryを選択する項目があります。lwip、loopbackを選択できるようになっていますので、ここにpassthroughを追加します。
+
+定義したconfigはCONFIG_XXXとしてcmakeで参照できます。menuconfigから有効にすると、CONFIG_XXXがTRUEになります。
+
+![menuconfig](/assets/images/image-2024-02-15-wifi-netif-config.png)
+
+### CMakeLists.txtの修正
+
+ビルドするファイルを記述しています。passthroughのCONFIG_XXXが有効の場合にesp_netif_passthrough.cがビルド対象となるように修正します。
+
+esp_netif_passthrough.cの中身は空です。
+
+## 次回
+
+今回はここまでです。この状態でビルドするとpassthroughを実装していないのでリンクエラーになります。
+
+次はpassthroughを実装していきます。
+
+## 以上
