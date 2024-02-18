@@ -1,0 +1,149 @@
+---
+layout: post
+title:  NUCLEO-F302R8 wifi ESP32 NETIF
+date:   2024-02-18 23:00:00 +0900
+categories: NUCLEO-F302R8
+tags: stm32 arm esp32
+mermaid: true
+---
+
+NUCLEO-F302R8でwifi通信することが目標です。
+
+NUCLEO-F302R8にwifiの機能はありません。ESP32-WROOM-32-DevKitCをUARTで繋ぎ、wifi機能を使用して通信をします。
+
+前回、ESP32のWIFIサンプルプログラムで標準のNETIFであるlwipを無効にしてビルドを行い、ビルドエラーが出力されるところまで確認しました。
+
+[前回: ESP開発環境]({% link _posts/2024-02-14-NUCLEO-F302R8-wifi.markdown %})
+
+今回はビルドエラーを解決してアクセスポイントとデータの送受信ができるところまで確認します。
+
+## リファレンス
+
+STM32
+
+* マイコンのRM(リファレンスマニュアル)
+  * RM: <https://www.st.com/resource/en/reference_manual/rm0365-stm32f302xbcde-and-stm32f302x68-advanced-armbased-32bit-mcus-stmicroelectronics.pdf>
+  * マイコンの基本的な資料
+* マイコンのDS(データシート)
+  * DS: <https://www.st.com/resource/en/datasheet/stm32f302r6.pdf>
+  * マイコンのPin配置やポートの機能一覧、HW特性
+* マイコンのPM(プログラミングマニュアル)
+  * PM: <https://www.st.com/resource/ja/programming_manual/pm0214-stm32-cortexm4-mcus-and-mpus-programming-manual-stmicroelectronics.pdf>
+  * CPU、アセンブラ
+
+ESP32
+
+* ESP32-IDF プログラミングガイド
+  * ESP-IDF: <https://docs.espressif.com/projects/esp-idf/en/stable/esp32/index.html>
+* ESP32-DevKitC-32E データシート
+  * ESP-DS: <https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32e_esp32-wroom-32ue_datasheet_en.pdf>
+
+## HW構成
+
+![HW構成](/assets/images/image-2024-02-18-wifi-netif-hw.png)
+
+PCでアクセスポイントを作成して通信できるか試します。
+
+## 自作ESP-NETIFの作成
+
+loopbackのNETIFをベースにWIFIで受信したEthernetフレームのパススルーを行うNETIFを作成します。
+
+<https://github.com/espressif/esp-idf/blob/master/components/esp_netif/loopback/esp_netif_loopback.c>
+
+### 自作ESP-NETIF: passthrough
+
+追加したソースコードです。
+
+#### esp_netif_passthrough.c
+
+<https://github.com/ohmusso/wifi_netif/commit/fe57bdf83ec2dff2bc6eeb3fa8bf84ddd4292a0e#diff-b366a0788678920f2c36f17c4819d867ddad30bbff9811e8d76d37eb021890d7>
+
+送信と受信のAPIを定義しています。
+
+* esp_netif_transmit
+* esp_netif_receive
+
+また、esp_netif_netstackのAPIを定義しています。WIFIのドライバでesp_netif_netstackが参照されており、ビルドエラーになりました。正直あまり用途が分かっていないので、適当に実装をしています。
+
+残りのAPIはベースのloopbackのままです。
+
+#### esp_netif_net_stack.h
+
+<https://github.com/ohmusso/wifi_netif/commit/fe57bdf83ec2dff2bc6eeb3fa8bf84ddd4292a0e#diff-f2f8008f26ee2685b13843cab123b3023e6eb9a73527aa5aec87b1acce93de88>
+
+esp_netif_netstackのヘッダも追加しています。
+
+## station_example_main.cの修正
+
+NETIFの動かすためのコードです。
+
+<https://github.com/ohmusso/wifi_netif/commit/fe57bdf83ec2dff2bc6eeb3fa8bf84ddd4292a0e?diff=split&w=0#diff-c7bf18ca81e73aaacf6a63f242428224b2afdf8515e09efaace9d236fd3908a6>
+
+### IPアドレス取得イベント待ちの削除
+
+wifi_init_staのxEventGroupWaitBitsでWIFI_CONNECTED_BITがセットされることを待っています。WIFI_CONNECTED_BITがセットされたらアクセスポイントへの接続が完了となっています。
+
+修正前はevent_handlerでIPアドレス取得イベント(IP_EVENT_STA_GOT_IP)が発生したらxEventGroupSetBitsでWIFI_CONNECTED_BITをセットしていました。
+xEventGroupはFreeRTOSのAPIです。ESP32で様々なイベントを定義しており、IP_EVENT_STA_GOT_IPはlwipのDHCPでアドレスが取得出来たら発生するイベントです。
+
+今回はNETIFをlwipからpassthroughに変更したので、IP_EVENT_STA_GOT_IPが発生しません。そのため、xEventGroupWaitBitsで止まってしまいます。WIFI_EVENT_STA_CONNECTEDが発生したらWIFI_CONNECTED_BITをセットするように修正します。
+
+### ARPの送信
+
+NETIFでの送受信の確認のためにARPのメッセージを作成して送信してみます。ARPの処理はvCreateArpReqを見てください。
+
+ARPのフォーマットは以下の記事を参考にしました。
+
+<https://www.n-study.com/tcp-ip/arp-format/>
+
+以下は作成を通して学んだことです。
+
+* 構造体で通信データを定義するときに普通の構造体定義ではアライメント調整が入るため、構造体定義の最後に__attribute__( ( packed ) )を付ける。これによりコンパイラはアライメント調整をしなくなる。
+* 通信データの構造体メンバでuint16_t、uint32_tを使用するときはエンディアンに注意すること。
+  * 例: uint16_t usData = 0x1234; ⇒ リトルエンディアンなので通信バッファの配列では0x34, 0x12の順番になる。
+
+## 動作確認
+
+### テスト用のアクセスポイント
+
+私はwindows10のノートPCで開発しています。このノートPCでアクセスポイントを作成します。ネットワーク名(SSID)とパスワードはテスト用に変更してます。スマホでもできると思います。※後述のWiresharkがスマホでは使えないと思います。
+
+![アクセスポイントの作成](/assets/images/image-2024-02-18-wifi-ap.png)
+
+アクセスポイントを作成したら、アクセスポイントがどのネットワークアダプターに接続されているかを確認してます。あとでWiresharkでモニタするアダプターとして選択します。
+
+![ネットワークアダプターの確認1](/assets/images/image-2024-02-18-wifi-ap-adapter.png)
+
+Virtual Adapterと表示されているものがアクセスポイントのネットワークアダプターです。
+
+![ネットワークアダプターの確認2](/assets/images/image-2024-02-18-wifi-ap-adapter-local.png)
+
+### ESP32のアクセスポイント接続設定
+
+ESP32にアクセスポイントのSSIDとパスワードを設定します。
+
+idf.py menuconfigのExample Configrationから設定できます。
+
+![アクセスポイントの作成](/assets/images/image-2024-02-18-wifi-esp32-config.png)
+
+### Wireshark
+
+Wiresharkで通信を確認します。
+
+インストールについては以下の記事を参考にしました。
+
+<https://qiita.com/yasushi-jp/items/7cabe6089c760ad420>
+
+インストールが完了したらWiresharkを起動して先ほど確認したアクセスポイントのネットワークアダプターをモニタします。
+
+![Wiresharkのスタート画面](/assets/images/image-2024-02-18-wifi-wireshark.png)
+
+### 結果
+
+WiresharkとESP32のログ画面です。ARPのリクエストとレスポンスが確認できました。
+
+![ARPの動作確認結果](/assets/images/image-2024-02-18-wifi-netif-arp.png)
+
+## 以上
+
+次はSTM32とUARTで通信できるようにします。

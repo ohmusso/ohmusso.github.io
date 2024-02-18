@@ -7,7 +7,7 @@ tags: stm32 arm wifi
 mermaid: true
 ---
 
-wifiで通信することが目標です。
+NUCLEO-F302R8でwifi通信することが目標です。
 
 NUCLEO-F302R8にwifiの機能はありません。ESP32-WROOM-32-DevKitCをUARTで繋ぎ、wifi機能を使用して通信をします。
 
