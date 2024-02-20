@@ -1,0 +1,80 @@
+---
+layout: post
+title:  NUCLEO-F302R8 wifi ESP32 UART
+date:   2024-02-19 22:00:00 +0900
+categories: NUCLEO-F302R8
+tags: stm32 arm esp32
+---
+
+NUCLEO-F302R8でwifi通信することが目標です。
+
+NUCLEO-F302R8にwifiの機能はありません。ESP32-WROOM-32-DevKitCをUARTで繋ぎ、wifi機能を使用して通信をします。
+
+前回、wifiでデータの送受信ができることを確認しました。
+
+[前回: wifi送受信]({% link _posts/2024-02-18-NUCLEO-F302R8-wifi.markdown %})
+
+今回はUARTの通信ができること確認します。
+
+## リファレンス
+
+STM32
+
+* マイコンのRM(リファレンスマニュアル)
+  * RM: <https://www.st.com/resource/en/reference_manual/rm0365-stm32f302xbcde-and-stm32f302x68-advanced-armbased-32bit-mcus-stmicroelectronics.pdf>
+  * マイコンの基本的な資料
+* マイコンのDS(データシート)
+  * DS: <https://www.st.com/resource/en/datasheet/stm32f302r6.pdf>
+  * マイコンのPin配置やポートの機能一覧、HW特性
+* マイコンのPM(プログラミングマニュアル)
+  * PM: <https://www.st.com/resource/ja/programming_manual/pm0214-stm32-cortexm4-mcus-and-mpus-programming-manual-stmicroelectronics.pdf>
+  * CPU、アセンブラ
+
+ESP32
+
+* ESP32-IDF プログラミングガイド
+  * ESP-IDF: <https://docs.espressif.com/projects/esp-idf/en/stable/esp32/index.html>
+* ESP32-DevKitC-32E データシート
+  * ESP-DS: <https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32e_esp32-wroom-32ue_datasheet_en.pdf>
+
+## HW構成
+
+![HW構成](/assets//images/image-2024-02-20-esp-uart-hw.png)
+
+### HWの接続
+
+* 超小型ＵＳＢシリアル変換モジュールにピンヘッダが付属しています。はんだ付けが必要です。
+* 超小型ＵＳＢシリアル変換モジュールから5Vが出力されます。ESP32-WROOM-32-DevKitCの5Vに入力できます。
+* Tx/Rxはクロスします。
+![HWの接続](/assets/images/image-2024-01-14-hw-connection.jpg)
+
+## ESP32 UART
+
+以下の公式の資料に沿ってプログラムを作成します。
+
+<https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/peripherals/uart.html>
+
+### UARTの設定
+
+* UART1(UART_NUM_1)を使用します。ESP32-WROOMにはUARTが3つあります。
+* ボーレートは9600にします。
+* GPIOの設定はESP32のATコマンドファームウェアに合わせました。CTS, RTSは設定だけで使いません。
+  * <https://docs.espressif.com/projects/esp-at/en/latest/esp32/Get_Started/Hardware_connection.html#esp32-wroom-32-series>
+  * Rx: GPIO16
+  * Tx: GPIO17
+  * CTS: GPIO15
+  * RTS: GPIO14
+
+### ソースコード
+
+エコーを返すプログラムを作って動作確認をします。
+
+<https://github.com/ohmusso/wifi_netif/commit/ba2d8acbe2f3b74175f76505745ba13f2b14f159>
+
+## 動作確認
+
+![構成図](/assets//images/image-2024-02-20-esp-uart.gif)
+
+## 以上
+
+次はSTM32でUARTを通してwifiのデータを送受信できるようにします。

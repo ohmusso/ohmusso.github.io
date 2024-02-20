@@ -4,7 +4,6 @@ title:  NUCLEO-F302R8 wifi ESP32 NETIF
 date:   2024-02-18 23:00:00 +0900
 categories: NUCLEO-F302R8
 tags: stm32 arm esp32
-mermaid: true
 ---
 
 NUCLEO-F302R8でwifi通信することが目標です。
@@ -146,4 +145,4 @@ WiresharkとESP32のログ画面です。ARPのリクエストとレスポンス
 
 ## 以上
 
-次はSTM32とUARTで通信できるようにします。
+次はUARTで通信できるようにします。
