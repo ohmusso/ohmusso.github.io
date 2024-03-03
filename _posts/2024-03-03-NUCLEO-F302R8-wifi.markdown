@@ -1,0 +1,282 @@
+---
+layout: post
+title:  NUCLEO-F302R8 wifi over uart
+date:   2024-03-03 16:00:00 +0900
+categories: NUCLEO-F302R8
+tags: stm32 arm esp32
+mermaid: true
+---
+
+NUCLEO-F302R8でwifi通信することが目標です。
+
+NUCLEO-F302R8にwifiの機能はありません。ESP32-WROOM-32-DevKitCをUARTで繋ぎ、wifi機能を使用して通信をします。
+
+これまではESP32単体でwifiとuartの動作確認を行いました。
+
+[wifi送受信]({% link _posts/2024-02-18-NUCLEO-F302R8-wifi.markdown %})
+
+[UART送受信]({% link _posts/2024-02-25-NUCLEO-F302R8-wifi.markdown %})
+
+今回はSTM32でuartを経由してwifiアクセスポイントと通信ができること確認します。
+
+通信はDHCPv6を試します。
+
+## リファレンス
+
+STM32
+
+* マイコンのRM(リファレンスマニュアル)
+  * RM: <https://www.st.com/resource/en/reference_manual/rm0365-stm32f302xbcde-and-stm32f302x68-advanced-armbased-32bit-mcus-stmicroelectronics.pdf>
+  * マイコンの基本的な資料
+* マイコンのDS(データシート)
+  * DS: <https://www.st.com/resource/en/datasheet/stm32f302r6.pdf>
+  * マイコンのPin配置やポートの機能一覧、HW特性
+* マイコンのPM(プログラミングマニュアル)
+  * PM: <https://www.st.com/resource/ja/programming_manual/pm0214-stm32-cortexm4-mcus-and-mpus-programming-manual-stmicroelectronics.pdf>
+  * CPU、アセンブラ
+
+ESP32
+
+* ESP32-IDF プログラミングガイド
+  * ESP-IDF: <https://docs.espressif.com/projects/esp-idf/en/stable/esp32/index.html>
+* ESP32-DevKitC-32E データシート
+  * ESP-DS: <https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32e_esp32-wroom-32ue_datasheet_en.pdf>
+
+## HW構成
+
+![HW構成](/assets//images/image-2024-03-03-ipv6-dhcp-hw.png)
+
+## Uartを経由したデータの送受信
+
+あまり安定しないです。要改善です。
+
+### Uartのデータフォーマット
+
+|Tag: 2byte|Data Length: 2byte|Data: Data Length|
+
+* Tag: データの種類を示します。
+  * Ack: 応答を示します。Data LengthとDataはなしです。
+  * Data: データ(ペイロード)です。Data LengthとDataが続きます。
+* Data Length: データ長を示します。
+* Data: データです。
+
+### 送信
+
+```mermaid
+sequenceDiagram
+    %% participant
+    participant STM32
+    participant ESP32
+    participant Wi-Fi AP
+    %% main
+      STM32->>+ESP32: Tag: 2byte
+      STM32->>+ESP32: Data Length: 2byte
+      STM32->>+ESP32: Data: Data Length
+      ESP32->>+Wi-Fi AP: Data Frame
+```
+
+### 受信
+
+```mermaid
+sequenceDiagram
+    %% participant
+    participant STM32
+    participant ESP32
+    participant Wi-Fi AP
+    %% main
+      Wi-Fi AP->>+ESP32: Data Frame
+      ESP32->>+STM32: Tag: 2byte
+      ESP32->>+STM32: Data Length: 2byte
+      ESP32->>+STM32: Data: Data Length
+```
+
+## 初期化
+
+### IPTask起動
+
+IPTaskの起動とNetworkInterface Taskを起動するまでのシーケンスです。
+
+```mermaid
+sequenceDiagram
+    %% participant
+    participant main
+    participant FreeRTOS-Plus-TCP
+    participant NetworkInterface
+    %% main
+    main->>+NetworkInterface: FillInterfaceDescriptor
+    NetworkInterface->>FreeRTOS-Plus-TCP: FreeRTOS_AddNetworkInterface
+    main->>FreeRTOS-Plus-TCP: FreeRTOS_IPInit_Multi
+    FreeRTOS-Plus-TCP->>FreeRTOS-Plus-TCP: xTaskCreate(prvIPTask) 
+    main->>FreeRTOS-Plus-TCP: vTaskStartScheduler 
+    %% task wakeup
+    FreeRTOS-Plus-TCP->>+FreeRTOS-Plus-TCP: prvIPTask
+    FreeRTOS-Plus-TCP->>NetworkInterface: xNetworkInterfaceInitialise
+    NetworkInterface->>NetworkInterface: initialize uart driver
+    NetworkInterface->>NetworkInterface: vWaitEspInit
+    NetworkInterface->>FreeRTOS-Plus-TCP: xTaskCreate(NetworkInterface task)
+    FreeRTOS-Plus-TCP->>-FreeRTOS-Plus-TCP: Task Blocked
+    NetworkInterface->>+NetworkInterface: NetworkInterface task
+    NetworkInterface->>NetworkInterface: FreeRTOS_FillEndPoint_IPv6
+    NetworkInterface->>-NetworkInterface: Task Blocked
+```
+
+FreeRTOS_FillEndPoint_IPv6でIPアドレスの初期値を設定します。DHCPで設定されるまで、またはDHCPが失敗したときのIPアドレスになります。
+
+シーケンス中のvWaitEspInitについて説明します。
+
+#### vWaitEspInit
+
+ESP32の初期化が完了するまで待ちます。
+
+ESP32の起動が完了していると無限ループになります。
+
+以下はSTM32側のシーケンスですが、ESP32もSTM32からAckを受信するまで無限ループします。どちらかをリセットすると片方もリセットが必要です。改善したいところです。
+
+```mermaid
+sequenceDiagram
+    %% participant
+    participant STM32
+    participant ESP32
+    %% main
+    loop STM32 receive Ack from ESP32
+      STM32->>+ESP32: Ack
+      opt done initialize
+          ESP32->>+STM32: Ack
+      end
+    end
+```
+
+## DHCPv6 Stateless
+
+DHCPv6 Statelessを動かしてみます。DHCPv6の解説は以下の記事を見てください。
+
+<https://www.infraexpert.com/study/ipv6z5.html#google_vignette>
+
+RS(Router Solicitation)をDHCPサーバ(Wi-Fi AP)に送信すると、DHCPサーバがRA(Router Advertisement)を返します。RAにIPアドレスを自動設定するための情報が含まれます。
+
+### シーケンス
+
+#### RSの送信
+
+```mermaid
+sequenceDiagram
+    %% participant
+    participant FreeRTOS_IP
+    participant FreeRTOS_RA
+    participant NetworkInterface
+    participant Uart
+    %% main
+    FreeRTOS_IP->>+FreeRTOS_IP: prvIPTask
+    FreeRTOS_IP->>FreeRTOS_IP: prvProcessNetworkDownEvent
+    FreeRTOS_IP->>FreeRTOS_RA: vRAProcess
+    FreeRTOS_RA->>FreeRTOS_RA: vNDSendRouterSolicitation
+    FreeRTOS_RA->>NetworkInterface: NetworkInterfaceOutput
+    NetworkInterface->>Uart: Uart Transmit
+    FreeRTOS_IP->>-FreeRTOS_IP: Task Blocked
+```
+
+#### RAの受信
+
+```mermaid
+sequenceDiagram
+    %% participant
+    participant FreeRTOS_IP
+    participant FreeRTOS_RA
+    participant NetworkInterface
+    participant Uart
+    %% main
+    Uart->>+Uart: Interrupt Begin
+    Uart->>NetworkInterface: Uart Receive and Push RxQueue
+    Uart->>-Uart: Interrupt End
+    NetworkInterface->>+NetworkInterface: NetworkInterface task
+    NetworkInterface->>FreeRTOS_IP: xSendEventStructToIPTask
+    NetworkInterface->>-NetworkInterface: NetworkInterface task
+    FreeRTOS_IP->>+FreeRTOS_IP: prvIPTask
+    FreeRTOS_IP->>FreeRTOS_IP: prvHandleEthernetPacket
+    FreeRTOS_IP->>FreeRTOS_RA: vReceiveRA
+    FreeRTOS_IP->>-FreeRTOS_IP: Task Blocked
+```
+
+## ソースコード
+
+* STM32
+  * <https://github.com/ohmusso/NUCLEO-F302R8/tree/152e90448ef67ef41c4716010c3dae1f83e45348>
+* ESP32
+  * <https://github.com/ohmusso/wifi_netif/tree/0f71efc3beeba2df5bfd52f4531e3a8b0128a17b>
+
+## 動作確認
+
+### テスト用のアクセスポイント
+
+私はwindows10のノートPCで開発しています。このノートPCでアクセスポイントを作成します。ネットワーク名(SSID)とパスワードはテスト用に変更してます。
+
+![アクセスポイントの作成](/assets/images/image-2024-02-18-wifi-ap.png)
+
+アクセスポイントを作成したらアクセスポイントがどのネットワークアダプターに接続されているかを確認してます。
+
+![ネットワークアダプターの確認1](/assets/images/image-2024-02-18-wifi-ap-adapter.png)
+
+Virtual Adapterと表示されているものがアクセスポイントのネットワークアダプターです。
+
+![ネットワークアダプターの確認2](/assets/images/image-2024-02-18-wifi-ap-adapter-local.png)
+
+ネットワークアダプターのIPアドレスを以下のように設定します。”ipconfig -all"の結果です。
+
+![ipconfig -all](/assets/images/image-2024-03-03-ipv6-dhcp-ipconfig.png)
+
+設定のためのスクリプトです。※ IPv6は2002:db8::1だけ設定したのですが、ipconfigの結果のように別のIPv6アドレスが設定されています。
+
+``` powershell
+# アクセスポイントのネットワークアダプター名を設定します。
+$netIfAlias = "ローカル エリア接続* 4"
+# アクセスポイントのネットワークアダプターにIPv6アドレスを設定します。
+New-NetIPAddress -InterFaceAlias $netIfAlias -IPAddress 2001:db8::1 -PrefixLength 64 -SkipAsSource $True -PolicyStore ActiveStore
+# アクセスポイントのネットワークアダプターにRAを送信させる設定をします。
+Set-NetIPInterface -InterFaceAlias $netIfAlias -AddressFamily IPv6 -Advertising Enabled -AdvertiseDefaultRoute Enabled -Forwarding Enabled
+Set-NetRoute -InterFaceAlias $netIfAlias -AddressFamily IPv6 -Publish Yes
+```
+
+たまにアクセスポイントのネットワークアダプタにリンクローカルアドレスが設定されていないときがあります。その場合はRouter Advertisementを送信しなかったので、手動でリンクローカルアドレスを設定しないといけませんでした。スクリプトは以下になります。
+
+``` powershell
+New-NetIPAddress -InterFaceAlias $netIfAlias -IPAddress fe80::1 -PrefixLength 64 -SkipAsSource $True -PolicyStore ActiveStore
+```
+
+### ESP32のアクセスポイント接続設定
+
+ESP32にアクセスポイントのSSIDとパスワードを設定します。
+
+idf.py menuconfigのExample Configrationから設定できます。
+
+![アクセスポイントの作成](/assets/images/image-2024-02-18-wifi-esp32-config.png)
+
+### Wireshark
+
+Wiresharkで通信を確認します。
+
+インストールについては以下の記事を参考にしました。
+
+<https://qiita.com/yasushi-jp/items/7cabe6089c760ad420>
+
+インストールが完了したらWiresharkを起動して先ほど確認したアクセスポイントのネットワークアダプターをモニタします。
+
+![Wiresharkのスタート画面](/assets/images/image-2024-02-18-wifi-wireshark.png)
+
+### 結果
+
+Wiresharkのログです。STMがRouter Solicitationを送信していること、アクセスポイントがRouter Advertisementが確認できました。
+
+* No.51: STMがRouter Solicitationを送信しています。
+* No.52: アクセスポイントがRouter Advertisementを送信しています。
+  * アクセスポイントに設定したIPv6のプレフィックスを送信しています。
+  * ゲートウェイの情報は送信しませんでした。
+* No.54～: ND(Neighbor Discovery)を送信しています。RAで受信したプレフィックスを使用したアドレスを生成しています。このNDはIPv4のGARPのようなものです。
+  * NDの解説記事: <https://www.infraexpert.com/study/ipv6z5.html#google_vignette>
+  * GARPの解説記事: <https://www.infraexpert.com/study/tcpip3.5.html>
+  * インターフェースIDがALL 1となっています。ランダムな値を生成する必要がありますが、私のソースコードでは固定値としています。以下のAPIを確認してください。
+    * FreeRTOS_CreateIPv6Address
+    * xApplicationGetRandomNumber
+
+![ARPの動作確認結果](/assets/images/image-2024-03-03-ipv6-dhcp-cap.png)
+
+## 以上
