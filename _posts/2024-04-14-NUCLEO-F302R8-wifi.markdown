@@ -76,7 +76,7 @@ Flutterはクロスプラットフォームに対応していますが、Webア�
 
 ![リンクローカルアドレスの確認](/assets/images/image-2024-04-14-ipv6-udp-server-ip.png)
 
-### ESP32のアクセスポイント接続設定
+### 結果
 
 Wiresharkでキャプチャした結果です。fe80::1235がクライアントのIPアドレスです。サーバにUDPのデータを送信する前にNeighbor DiscoveryでサーバのMACアドレスを解決しています。
 
