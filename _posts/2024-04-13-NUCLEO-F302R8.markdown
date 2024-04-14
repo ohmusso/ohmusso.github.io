@@ -1,0 +1,83 @@
+---
+layout: post
+title:  IOT開発 NUCLEO-F302R8
+date:   2024-04-13 21:00:00 +0900
+categories: NUCLEO-F302R8
+tags: stm32 arm esp32
+mermaid: false
+---
+
+IOT開発で勉強してアウトプットしたことをまとめたページです。
+
+## HW
+
+### NUCLEO-F302R8
+
+STMの32bitマイコン(STMF302R8)が搭載された評価ボードです。
+
+<https://www.st.com/ja/evaluation-tools/nucleo-f302r8.html>
+
+* CPU: Arm Cortex-M4. Single core.
+* Internal Clock: 8MHz
+* FLASH: 64K
+* SRAM: 16K
+
+#### 必要な付属品
+
+* USB Cable mini B
+  * PCと評価ボートを接続します。ST-LINK(書き込み、Debug)で使用します。
+  * ex) elecom: U2C-MF10BK
+
+### ESP32 WROOM
+
+NUCLEO-F302R8だけではWIFIの通信ができないため、ESP32の評価ボードとUARTで接続してWIFIの通信を行います。
+
+### HW接続
+
+![HW接続](/assets//images/image-2024-03-03-ipv6-dhcp-hw.png)
+
+以下はESP32の写真です。黄色がUARTのRxです。白色がUARTのTxです。
+
+![ESPの写真](/assets/images/image-2024-04-14-ipv6-udp-hw-connection.png)
+
+## SW
+
+ソースコードのリポジトリです。FreeRTOSを使用しています。
+
+* NUCLEO-F302R8
+  * <https://github.com/ohmusso/NUCLEO-F302R8/tree/23141cea7f6d328000433ae207fcdddc66628d6a>
+* ESP32 WROOM
+  * <https://github.com/ohmusso/wifi_netif/tree/85dffd1ceec5e20d9d5bb7bb1315bcf6dae66398>
+
+## リファレンス
+
+STM32
+
+* マイコンのRM(リファレンスマニュアル)
+  * RM: <https://www.st.com/resource/en/reference_manual/rm0365-stm32f302xbcde-and-stm32f302x68-advanced-armbased-32bit-mcus-stmicroelectronics.pdf>
+  * マイコンの基本的な資料
+* マイコンのDS(データシート)
+  * DS: <https://www.st.com/resource/en/datasheet/stm32f302r6.pdf>
+  * マイコンのPin配置やポートの機能一覧、HW特性
+* マイコンのPM(プログラミングマニュアル)
+  * PM: <https://www.st.com/resource/ja/programming_manual/pm0214-stm32-cortexm4-mcus-and-mpus-programming-manual-stmicroelectronics.pdf>
+  * CPU、アセンブラ
+
+ESP32
+
+* ESP32-IDF プログラミングガイド
+  * ESP-IDF: <https://docs.espressif.com/projects/esp-idf/en/stable/esp32/index.html>
+* ESP32-DevKitC-32E データシート
+  * ESP-DS: <https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32e_esp32-wroom-32ue_datasheet_en.pdf>
+
+## 解発環境
+
+* Windows10
+
+## ページ一覧
+
+[wifi送受信]({% link _posts/2024-02-18-NUCLEO-F302R8-wifi.markdown %})
+
+[UART送受信]({% link _posts/2024-02-25-NUCLEO-F302R8-wifi.markdown %})
+
+[UDP送信]({% link _posts/2024-04-14-NUCLEO-F302R8-wifi.markdown %})
