@@ -2,8 +2,8 @@
 layout: post
 title:  IOT開発 NUCLEO-F302R8
 date:   2024-04-13 21:00:00 +0900
-categories: NUCLEO-F302R8
-tags: stm32 arm esp32
+categories: NUCLEO-F302R8 gcp
+tags: stm32 arm esp32 CloudFunctions
 mermaid: false
 ---
 
@@ -73,11 +73,18 @@ ESP32
 ## 解発環境
 
 * Windows10
+* GCP
 
 ## ページ一覧
+
+### 端末
 
 [wifi送受信]({% link _posts/2024-02-18-NUCLEO-F302R8-wifi.markdown %})
 
 [UART送受信]({% link _posts/2024-02-25-NUCLEO-F302R8-wifi.markdown %})
 
 [UDP送信]({% link _posts/2024-04-14-NUCLEO-F302R8-wifi.markdown %})
+
+### クラウド
+
+[Cloud Function ローカル環境]({% link _posts/2024-04-21-gcp-cloudfunction-local.markdown %})
