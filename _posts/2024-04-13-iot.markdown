@@ -70,7 +70,7 @@ ESP32
 * ESP32-DevKitC-32E データシート
   * ESP-DS: <https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32e_esp32-wroom-32ue_datasheet_en.pdf>
 
-## 解発環境
+## 開発環境
 
 * Windows10
 * GCP
