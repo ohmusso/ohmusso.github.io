@@ -7,6 +7,8 @@ tags: flutter geomap
 mermaid: false
 ---
 
+[土地情報閲覧アプリ開発]({% link _posts/2024-04-29-flutter.markdown %})
+
 FlutterのCustomPaintでバイナリベクトルタイルを描画します。
 
 ## バイナリベクトルタイルを使ってみたいと思った経緯
