@@ -1,6 +1,14 @@
 # github.io
 
-## jekyll info
+## jekyll
+
+### setup
+
+<https://docs.github.com/en/pages/setting-up-a-github-pages-site-with-jekyll/testing-your-github-pages-site-locally-with-jekyll>
+
+#### ruby version
+
+<https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-3.2.4-1/rubyinstaller-devkit-3.2.4-1-x64.exe>
 
 ### local test
 
@@ -12,6 +20,14 @@ or
 
 ``` powershell
 bundle exec jekyll serve --draft
+```
+
+#### restore gems
+
+when you checkout this repo, execute bellow command to install gems.
+
+``` powershell
+bundle install
 ```
 
 #### if error "cannot load such file -- webrick (LoadError)"
