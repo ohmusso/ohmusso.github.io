@@ -2,7 +2,7 @@
 layout: post
 title:  NUCLEO-F302R8 FreeRTOS 導入
 date:   2023-09-30 11:00:00 +0900
-categories: NUCLEO-F302R8
+categories: iot
 tags: stm32 arm
 ---
 

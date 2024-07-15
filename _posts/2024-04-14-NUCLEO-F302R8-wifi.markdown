@@ -2,7 +2,7 @@
 layout: post
 title:  NUCLEO-F302R8 wifi IPv6 UDP送信
 date:   2024-04-14 9:00:00 +0900
-categories: NUCLEO-F302R8
+categories: iot
 tags: stm32 arm esp32
 mermaid: true
 ---

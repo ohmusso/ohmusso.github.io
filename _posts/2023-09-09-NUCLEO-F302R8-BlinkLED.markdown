@@ -2,7 +2,7 @@
 layout: post
 title:  NUCLEO-F302R8 LEDチカチカ
 date:   2023-09-9 20:00:00 +0900
-categories: NUCLEO-F302R8
+categories: iot
 tags: stm32 arm
 ---
 

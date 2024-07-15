@@ -2,7 +2,7 @@
 layout: post
 title:  WSL2でUbuntu
 date:   2023-06-10 12:00:00 +0900
-categories: How-To
+categories: webland
 tags: docker wsl
 ---
 

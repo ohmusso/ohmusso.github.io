@@ -2,7 +2,7 @@
 layout: post
 title:  Flutter Web AWS Amplifyでデプロイ
 date:   2023-06-13 23:00:00 +0900
-categories: How-To
+categories: webland
 tags: aws flutter amplify
 ---
 

@@ -5,6 +5,7 @@ date:   2023-03-05 22:30:00 +0900
 categories: Jekyll
 tags: jekyll mermaid javascript
 mermaid: true
+toppage: true
 ---
 
 このサイトはurlから分かるように、githubページを使用しています。

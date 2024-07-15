@@ -2,7 +2,7 @@
 layout: post
 title:  Dart リストで重複する値を一つにまとめる 
 date:   2023-09-23 12:00:00 +0900
-categories: How-To
+categories: webland
 tags: dart flutter
 ---
 

@@ -2,7 +2,7 @@
 layout: post
 title:  Cloud Functions ローカル環境 httpリクエスト
 date:   2024-04-21 13:00:00 +0900
-categories: gcp
+categories: webland
 tags: CloudFunctions
 mermaid: false
 ---

@@ -2,7 +2,7 @@
 layout: post
 title:  Flutter WebをAmazon Linux2023でホスト Jenkinsでデプロイ
 date:   2023-06-04 21:30:00 +0900
-categories: How-To
+categories: webland
 tags: aws flutter jenkins
 ---
 

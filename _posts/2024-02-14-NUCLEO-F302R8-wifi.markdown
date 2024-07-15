@@ -2,7 +2,7 @@
 layout: post
 title:  NUCLEO-F302R8 wifi ESP32 開発環境
 date:   2024-02-14 17:00:00 +0900
-categories: NUCLEO-F302R8
+categories: iot
 tags: stm32 esp32
 ---
 

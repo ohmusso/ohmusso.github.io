@@ -2,7 +2,7 @@
 layout: post
 title:  NUCLEO-F302R8 FreeRTOS タスク
 date:   2023-10-02 21:00:00 +0900
-categories: NUCLEO-F302R8
+categories: iot
 tags: stm32 arm
 ---
 

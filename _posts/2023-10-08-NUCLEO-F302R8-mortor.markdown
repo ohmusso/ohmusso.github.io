@@ -2,7 +2,7 @@
 layout: post
 title:  NUCLEO-F302R8 3相ブラシレスDCモータ
 date:   2023-10-08 20:00:00 +0900
-categories: NUCLEO-F302R8
+categories: iot
 tags: stm32 arm bldc
 ---
 

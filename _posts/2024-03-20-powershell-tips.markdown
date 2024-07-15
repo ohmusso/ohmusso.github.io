@@ -4,7 +4,7 @@ title:  Powershell Tips
 date:   2024-03-20 21:00:00 +0900
 categories: Powershell
 tags: powershell excel
-mermaid: true
+toppage: true
 ---
 
 Powershellのスクリプトの使用例をまとめます。

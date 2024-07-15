@@ -2,7 +2,7 @@
 layout: post
 title:  NUCLEO-F302R8 BLDC センサーレス6step
 date:   2024-01-05 16:00:00 +0900
-categories: NUCLEO-F302R8
+categories: iot
 tags: stm32 arm bldc
 ---
 

@@ -2,7 +2,7 @@
 layout: post
 title:  AWS WordPress構築
 date:   2023-05-21 17:00:00 +0900
-categories: AWS
+categories: webland
 tags: cloudformation wordpress
 ---
 

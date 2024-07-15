@@ -2,7 +2,7 @@
 layout: post
 title:  Flutter Columnの中でListViewを使用
 date:   2023-07-17 21:00:00 +0900
-categories: How-To
+categories: webland
 tags: flutter
 ---
 

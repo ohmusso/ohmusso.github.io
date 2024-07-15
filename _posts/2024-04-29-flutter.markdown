@@ -4,7 +4,7 @@ title:  土地情報閲覧アプリ開発
 date:   2024-04-29 20:00:00 +0900
 categories: webland
 tags: flutter
-mermaid: false
+toppage: true
 ---
 
 土地情報閲覧アプリ開発(webland)で勉強してアウトプットしたことをまとめたページです。
@@ -21,7 +21,15 @@ mermaid: false
 
 [Dart リストで重複する値を一つにまとめる ]({% link _posts/2023-09-23-dart-collection-literals.markdown %})
 
+### Docker
+
+[Dockerチュートリアル MySQLの補足]({% link _posts/2023-03-22-mysql-in-docker.markdown %})
+
 ### クラウド
+
+[WindowsからAmazon Linux2へのファイル転送]({% link _posts/2023-05-23-aws-transport-file-to-ec2-from-windows.markdown %})
+
+[AWS サーバ構築(WordPress)]({% link _posts/2023-05-21-aws-wordpress-infrastructure.markdown %})
 
 [Flutter WebをAmazon Linux2でホスト]({% link _posts/2023-05-27-flutter-web-on-ec2-linux.markdown %})
 

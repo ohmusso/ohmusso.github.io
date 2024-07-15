@@ -2,7 +2,7 @@
 layout: post
 title:  Flutter Web CodePipelineでデプロイ
 date:   2023-06-11 12:00:00 +0900
-categories: How-To
+categories: webland
 tags: aws flutter codepipeline
 ---
 

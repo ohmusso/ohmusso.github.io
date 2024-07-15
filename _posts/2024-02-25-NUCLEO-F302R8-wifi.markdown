@@ -2,7 +2,7 @@
 layout: post
 title:  NUCLEO-F302R8 wifi ESP32 UART
 date:   2024-02-19 22:00:00 +0900
-categories: NUCLEO-F302R8
+categories: iot
 tags: stm32 arm esp32
 ---
 

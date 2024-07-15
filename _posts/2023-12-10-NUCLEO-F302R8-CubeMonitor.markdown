@@ -2,7 +2,7 @@
 layout: post
 title:  NUCLEO-F302R8 STM32CubeMonitor
 date:   2023-12-10 20:00:00 +0900
-categories: NUCLEO-F302R8
+categories: iot
 tags: stm32 arm
 ---
 

@@ -2,9 +2,9 @@
 layout: post
 title:  IOT開発 NUCLEO-F302R8
 date:   2024-04-13 21:00:00 +0900
-categories: NUCLEO-F302R8 gcp
+categories: iot
 tags: stm32 arm esp32 CloudFunctions
-mermaid: false
+toppage: true
 ---
 
 IOT開発で勉強してアウトプットしたことをまとめたページです。
@@ -30,7 +30,7 @@ STMの32bitマイコン(STMF302R8)が搭載された評価ボードです。
 
 ### ESP32 WROOM
 
-NUCLEO-F302R8だけではWIFIの通信ができないため、ESP32の評価ボードとUARTで接続してWIFIの通信を行います。
+NUCLEO-F302R8だけではWIFIの通信ができないため、NUCLEO-F302R8とESP32の評価ボードをUARTで接続してWIFIの通信を行います。
 
 ### HW接続
 
@@ -77,11 +77,51 @@ ESP32
 
 ## ページ一覧
 
-### 端末
+### ボード
 
-[wifi送受信]({% link _posts/2024-02-18-NUCLEO-F302R8-wifi.markdown %})
+[NUCLEO-F302R8 LEDチカチカ]({% link _posts/2023-09-09-NUCLEO-F302R8-BlinkLED.markdown %})
 
-[UART送受信]({% link _posts/2024-02-25-NUCLEO-F302R8-wifi.markdown %})
+[NUCLEO-F302R8 LEDチカチカ コード説明]({% link _posts/2023-09-12-NUCLEO-F302R8-BlinkLED.markdown %})
+
+[UART]({% link _posts/2023-09-26-NUCLEO-F302R8-uart.markdown %})
+
+[AD変換 01]({% link _posts/2023-12-02-NUCLEO-F302R8-adc.markdown %})
+
+[AD変換 02]({% link _posts/2023-12-13-NUCLEO-F302R8-adc2.markdown %})
+
+[割り込み]({% link _posts/2023-12-13-NUCLEO-F302R8-interrupt.markdown %})
+
+[FreeRTOS]({% link _posts/2023-09-30-NUCLEO-F302R8-FreeRTOS.markdown %})
+
+[FreeRTOS ビルド]({% link _posts/2023-09-30-NUCLEO-F302R8-FreeRTOS.markdown %})
+
+[FreeRTOS Task]({% link _posts/2023-10-02-NUCLEO-F302R8-FreeRTOS-task.markdown %})
+
+[FreeRTOS Task優先度]({% link _posts/2023-10-03-NUCLEO-F302R8-FreeRTOS-task-priority.markdown %})
+
+[FreeRTOS Task優先度]({% link _posts/2023-10-03-NUCLEO-F302R8-FreeRTOS-task-priority.markdown %})
+
+[STM CubeMonitor]({% link _posts/2023-12-10-NUCLEO-F302R8-CubeMonitor.markdown %})
+
+### モータ
+
+[BLDC センサレス6step制御 01]({% link _posts/2023-10-08-NUCLEO-F302R8-mortor.markdown %})
+
+[BLDC センサレス6step制御 02]({% link _posts/2023-11-25-NUCLEO-F302R8-mortor_02.markdown %})
+
+[BLDC センサレス6step制御 03]({% link _posts/2023-12-25-NUCLEO-F302R8-motor-sensorless-6step.markdown %})
+
+[BLDC センサレス6step制御 04]({% link _posts/2024-01-05-NUCLEO-F302R8-bldc-sensorless-6step.markdown %})
+
+### 通信
+
+[ESP32 wifi 01]({% link _posts/2024-01-07-NUCLEO-F302R8-wifi.markdown %})
+
+[ESP32 wifi 02]({% link _posts/2024-02-14-NUCLEO-F302R8-wifi.markdown %})
+
+[ESP32 wifi 03]({% link _posts/2024-02-18-NUCLEO-F302R8-wifi.markdown %})
+
+[ESP32 wifi 04]({% link _posts/2024-02-25-NUCLEO-F302R8-wifi.markdown %})
 
 [UDP送信]({% link _posts/2024-04-14-NUCLEO-F302R8-wifi.markdown %})
 
