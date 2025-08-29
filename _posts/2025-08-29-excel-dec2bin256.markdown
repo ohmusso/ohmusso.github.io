@@ -1,0 +1,42 @@
+---
+layout: post
+title: EXCEL 512以上の値を2進数に変換
+date:   2025-08-29 22:00:00 +0900
+categories: tool
+tags: excel
+mermaid: false
+---
+
+## 512以上の値を2進数に変換する
+
+DEC2BINで10進数を2進数に変換できます。
+
+しかし、512以上の値では以下のようにエラーになります。
+
+![31-24ビットをDEC2BINで変換](/assets//images/image-2025-08-29-start.png)
+
+## 4Byte以下(4294967295)の値をビット列に変換する
+
+8ビットずつDEC2BINで変換して、最後に連結します。
+
+例) 10進数 305419896 (16進数 0x12345678)
+
+1. 31-24ビットをDEC2BINで変換
+  =DEC2BIN(BITAND(BITRSHIFT(A2,24),255),8)
+  24ビット右シフトして255でマスク※マスクはなくてもよい
+  ![31-24ビットをDEC2BINで変換](/assets//images/image-2025-08-29-byte3.png)
+1. 23-16ビット目をDEC2BINで変換
+  =DEC2BIN(BITAND(BITRSHIFT(A2,16),255),8)
+  16ビット右シフトして255でマスク
+1. 15-8ビット目をDEC2BINで変換
+  =DEC2BIN(BITAND(BITRSHIFT(A2,8),255),8)
+  8ビット右シフトして255でマスク
+1. 7-0ビット目をDEC2BINで変換
+  =DEC2BIN(BITAND(BITRSHIFT(A2,0),255),8)
+  0ビット右シフトして255でマスク※ビットシフトはなくてもよい
+1. 以上のビット列を連結
+  ![結果1](/assets//images/image-2025-08-29-result1.png)
+  ![結果2](/assets//images/image-2025-08-29-result2.png)
+  1つのセル内でビット列に変換する数式を & で連結してもよい
+
+小さい値では先頭に0がたくさん付きます。指定した桁数を取り出したい場合はRIGHTを使ってください。
