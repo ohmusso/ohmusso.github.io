@@ -1,0 +1,477 @@
+---
+layout: post
+title: Linux Kernel build and run
+date:   2025-10-18 21:00:00 +0900
+categories: iot
+tags: linux
+mermaid: false
+---
+
+リナックスカーネルをビルドして実行するまでの作業を記事にしました。
+
+## 参考
+
+1. <https://embeddedcraft.org/eclinux/minilinux.html>
+1. <https://zenn.dev/arimax/articles/83c90a569145e8>
+1. <https://qiita.com/akachochin/items/d38b538fcabf9ff80531>
+
+## 環境
+
+* windows11
+* wsl2
+  * Debian  
+
+## 概要
+
+![概要](/assets/images/image-2025-10-13-my-linux-overview.png)
+
+## wsl Debianのセットアップ
+
+まずはwindowsでの作業になります。
+
+### Debianのインストールとログイン
+
+```powershell
+#powerhell
+wsl --install Debian --name Debian-MyLinuxBuild
+```
+
+Debianに名前を付けてインストールします。既にDebianをインストールされている場合に競合を防ぐためです。
+
+インストールが完了するとユーザ名、パスワードの入力を求められます。
+
+入力が完了するとDebianにログインします。
+
+一度シャットダウンして再度起動するときは以下のコマンドを入力してください。
+
+```powershell
+#powerhell
+wsl -d Debian-MyLinuxBuild
+```
+
+このLinuxを削除したい場合は以下のコマンドを入力してください。
+
+```powershell
+#powershell
+wsl --unregister Debian-MyLinuxBuild
+```
+
+### 必要なソフトウェアをインストール
+
+ここからはDebianでの作業となります。
+
+本開発に必要なソフトウェアをインストールします。
+
+#### 基本ツール
+
+```sh
+#sh
+sudo apt-get update
+sudo apt-get install -y wget
+sudo apt-get install -y xz-utils
+sudo apt-get install -y bzip2
+sudo apt-get install -y libncurses-dev
+sudo apt-get install -y qemu-system-x86
+sudo apt-get install -y gdb
+```
+
+* コマンド捕捉
+  * libncurses-dev: Linux Kernelとbusyboxのコンフィグ画面で必要なライブラリです。
+  * qemu: 自作Linuxを実行する仮想環境です。
+  * gdb: 自作Linuxをデバッグ実行するためデバッガです。
+
+#### Linux Kernelのビルドに必要なツール
+
+以下の公式ドキュメントを参考にしてツールをインストールしていますが、この記事では使用していないツールもありそうです。とりあえずインストールします。
+
+<https://docs.kernel.org/process/changes.html#current-minimal-requirements>
+
+```sh
+#sh
+sudo apt-get install -y gcc
+sudo apt-get install -y make
+sudo apt-get install -y binutils
+sudo apt-get install -y flex
+sudo apt-get install -y bison
+sudo apt-get install -y pahole
+sudo apt-get install -y util-linux
+sudo apt-get install -y kmod
+sudo apt-get install -y e2fsprogs
+sudo apt-get install -y jfsutils
+sudo apt-get install -y xfsprogs
+sudo apt-get install -y squashfs-tools
+sudo apt-get install -y btrfs-progs
+sudo apt-get install -y pcmciautils
+sudo apt-get install -y quota
+sudo apt-get install -y ppp
+sudo apt-get install -y procps
+sudo apt-get install -y udev
+sudo apt-get install -y grub2
+sudo apt-get install -y iptables
+sudo apt-get install -y openssl
+sudo apt-get install -y libcrypto
+sudo apt-get install -y bc
+sudo apt-get install -y tar
+```
+
+## 作業ディレクトリの作成
+
+```sh
+#sh
+mkdir ~/workspace_my_linux && cd ~/workspace_my_linux
+```
+
+最終的に以下のディレクトリ構成となります。
+
+```tree
+~ : homeディレクトリ
+┗ workspace_my_linux : 作業ディレクトリ
+   ┗ linux-5.13.2 : Linuxカーネル
+   ┗ my_initramfs : RAMに展開するルートファイルイメージ
+   ┗ busybox-1_36_1 : 各種Unixコマンドを一つにまとめたプログラム。自作Linuxでコマンドを使用するためにmy_initramfsに格納する。
+```
+
+## Linux Kernel
+
+自作のLinuxに組み込むカーネルを設定してビルドします。
+
+### Linux Kernelのソースをダウンロード
+
+以下のサイトにダウンロードできるバージョン一覧があります。
+
+<https://cdn.kernel.org/pub/linux/kernel/>
+
+この記事ではv5.13.2をダウンロードします。
+[参考 1.](#参考) の記事と同じバージョンをダウンロードしていますが、お好きなバージョンでOKです。
+
+```sh
+#sh
+cd ~/workspace_my_linux
+wget https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-5.13.2.tar.xz
+```
+
+### Linux Kernelのソースを解凍
+
+```sh
+#sh
+tar -xvf linux-5.13.2.tar.xz
+```
+
+### 最小設定のコンフィグファイルを作成
+
+```sh
+#sh
+cd linux-5.13.2
+make allnoconfig
+```
+
+allnoconfigはLinux Kernelのmakefileにターゲットとして定義されています。
+<https://docs.kernel.org/kbuild/kconfig.html>
+
+### Linux Kernelの設定
+
+#### menuconfig
+
+```sh
+#sh
+make menuconfig 
+```
+
+menuconfigで以下を設定します。
+
+* General Setup
+  * kernel compression mode: Gzip
+  * Default hostname: My_Linux
+  * Initial RAM filesystem and RAM disk (initramfs/initrd) support: Yes
+  * Configure standard kernel features (expert users): yes
+* 64-bit Kernel: Yes
+* Processor type and features
+  * Build a relocatable kernel: No
+* Executable file formats
+  * Kernel support for ELF binaries: Yes
+  * Kernel support for scripts starting with #!: Yes
+* Device Driver
+  * Generic Driver Options
+    * Maintain a devtmpfs filesystem to mount at /dev: Yes
+    * Automount devtmpfs at /dev, after the kernel mounted the rootfs: yes
+  * Character devices
+    * Enable TTY: Yes
+    * Serial Drivers
+      * 8250/16550 and compatible serial support: Yes
+      * Console on 8250/16550 and compatible serial port: Yes
+* File systems
+  * Pseudo filesystems
+    * /proc file system support: Yes
+    * /sysfs file system support: Yes
+* Kernel hacking
+  * Compile-time checks and compiler options
+    * Compile the kernel with debug info: Yes
+
+セーブしてコンフィグメニューから抜けます。
+.configが更新されます。
+
+### Linux Kernelをビルド
+
+```sh
+#sh
+make
+```
+
+## busybox
+
+自作LinuxでShellと基本的なコマンドを使用するためのbusyboxをビルドします。
+
+### busyboxのダウンロードと解凍
+
+この記事を作成した時点の最新v1.36.1をダウンロードします。
+
+```sh
+#sh
+cd ~/workspace_my_linux
+wget https://github.com/mirror/busybox/archive/refs/tags/1_36_1.tar.gz
+tar xzf 1_36_1.tar.gz
+```
+
+### busyboxの設定
+
+```sh
+#sh
+cd busybox-1_36_1
+make menuconfig
+```
+
+※make menuconfigでエラーとなる場合は以下を参照
+[busyboxのmenuconfigのエラー](#busyboxのmenuconfigのエラー)
+
+menuconfigで以下を設定します。
+
+* Settings
+  * Build static binary: Yes
+* Networking Utilities
+  * tc: No
+    * [busyboxのビルドエラー(TC)](#busyboxのビルドエラー)となるため。
+
+### busyboxのビルド
+
+```sh
+#sh
+make
+```
+
+### busyboxのインストールフォルダを作成
+
+```sh
+#sh
+make install
+```
+
+busybox-1_36_1/_installが作成されます。このディレクトリにコマンド実行環境一式(bin/shなど)が格納されています。
+
+実態はbin/busyboxだけで、他はbin/busiboxへのシンボリックリンクとなっています。
+
+#### busyboxのmenuconfigのエラー
+
+busyboxのコンフィグにはmenuconfigを使用しますが、make menuconfigを実行するとエラーになります。以下のそのエラーログです。
+
+```sh
+#sh
+  HOSTCC  scripts/kconfig/lxdialog/yesno.o
+  HOSTLD  scripts/kconfig/lxdialog/lxdialog
+ *** Unable to find the ncurses libraries or the
+ *** required header files.
+ *** 'make menuconfig' requires the ncurses libraries.
+ ***
+ *** Install ncurses (ncurses-devel) and try again.
+ ***
+make[2]: *** [/home/jtp/workspace_kernel_mini/busybox-1_36_1/scripts/kconfig/lxdialog/Makefile:15: scripts/kconfig/lxdialog/dochecklxdialog] Error 1
+make[1]: *** [/home/jtp/workspace_kernel_mini/busybox-1_36_1/scripts/kconfig/Makefile:14: menuconfig] Error 2
+make: *** [Makefile:444: menuconfig] Error 2
+```
+
+make menuconfigの一部スクリプトをエディタ(vi)で修正します。
+
+``` sh
+#sh
+vi scripts/kconfig/lxdialog/check-lxdialog.sh
+```
+
+スクリプト内のmain関数の型が省略されているため、エラーが発生します。以下のようにintを追記し、保存して終了します。
+
+![busyboxのmenuconfigのエラー](/assets/images/image-2025-10-13-my-linux-build-busybox-config-patch.png)
+
+※解決方法は以下を参考にしました。
+<https://stackoverflow.com/questions/78491346/busybox-build-fails-with-ncurses-header-not-found-in-archlinux-spoiler-i-alrea>
+>
+
+#### busyboxのビルドエラー
+
+TC(traffic control)を有効のままビルドすると、以下のようにビルドエラーになります。本記事で使用しない機能なので、TCを無効にします。
+
+``` sh
+#sh
+  CC      networking/ssl_client.o
+  CC      networking/tc.o
+networking/tc.c: In function ‘cbq_print_opt’:
+networking/tc.c:236:27: error: ‘TCA_CBQ_MAX’ undeclared (first use in this function); did you mean ‘TCA_CBS_MAX’?
+  236 |         struct rtattr *tb[TCA_CBQ_MAX+1];
+      |                           ^~~~~~~~~~~
+      |                           TCA_CBS_MAX
+networking/tc.c:236:27: note: each undeclared identifier is reported only once for each function it appears in
+networking/tc.c:249:16: error: ‘TCA_CBQ_RATE’ undeclared (first use in this function); did you mean ‘TCA_TBF_RATE64’?
+  249 |         if (tb[TCA_CBQ_RATE]) {
+      |                ^~~~~~~~~~~~
+      |                TCA_TBF_RATE64
+```
+
+## initramfs
+
+自作LinuxがRAMに展開して使用するルートファイルイメージを作成します。
+基本的なコマンドが使えるようにbusyboxを格納します。
+
+※一般的にはRAMからHDD/SSDのようなNVMにマウントしますが、本記事ではRAMでのみ動かします。
+  <https://ja.wikipedia.org/wiki/Initrd>
+
+### 作業ディレクトリを作成
+
+```sh
+#sh
+cd ~/workspace_my_linux
+mkdir my_initramfs && cd my_initramfs
+```
+
+### ディレクトリを作成
+
+最低限のディレクトリを作成します。
+
+```sh
+#sh
+mkdir -p etc proc sys dev
+```
+
+### ビルドしたbusyboxをコピー
+
+```sh
+#sh
+cp -a ../busybox-1_36_1/_install/* .
+```
+
+### 初期化スクリプトinitを作成
+
+本項目はwindowsでの作業です。
+
+widowsの好きなエディタで以下のスクリプトを記述したinitファイルを作成します。
+ただし、エディタの改行コードはLFにしてください。qemuで実行したときにスクリプトがエラーになります。
+
+```sh
+#!/bin/sh
+mount -t proc none /proc
+mount -t sysfs none /sys
+cat <<!
+boot took $(cut -d' ' -f1 /proc/uptime) seconds
+Welcome to My Linux !!!
+!
+exec /bin/sh
+```
+
+* コマンド補足
+  * proc, sysディレクトリをマウント
+  * catでLinuxが起動したことを表示
+  * execでshellを起動
+
+作成したファイルをwslから見れるフォルダに保存します。
+例) C:Users/XXX/init
+
+### initをinitramfsにコピー
+
+Debianでの作業に戻ります。
+
+initをwindowsの"C:Users/XXX/init"に作成した場合、以下のコマンドでinitをinitramfsディレクトリにコピーします。
+
+```sh
+#sh
+cd ~/workspace_my_linux/my_initramfs
+cp /mnt/c/users/XXX/init .
+```
+
+### initに実行権限を付与
+
+``` sh
+chmod +x init
+```
+
+### initramfsを作成
+
+```sh
+#sh
+find . -print0 | cpio --null -ov --format=newc | gzip -9 > initramfs.cpio.gz
+```
+
+initramfs.cpio.gzが作成されます。
+
+## qemuに自作Linuxをブート
+
+```sh
+#sh
+cd ~/workspace_my_linux
+qemu-system-x86_64 \
+-kernel ~/workspace_my_linux/linux-5.13.2/arch/x86_64/boot/bzImage \
+-initrd ~/workspace_my_linux/my_initramfs/initramfs.cpio.gz \
+-append "init=/bin/sh console=ttyS0" -nographic
+```
+
+"Welcome to ..."が表示されたらOKです。
+
+qemu内で実行されている自作Linuxでもlsなどのコマンドを使用できることを確認してください。
+
+### qemuを終了
+
+「Ctrl + Alt + A」 + 「x」でqemuが終了し、ターミナルに戻ります。
+
+### gdb
+
+powershellをもう一つ立ち上げて、Debian-MyLinuxBuildのターミナルをもう一つ立ち上げます。
+
+一つのターミナルでqemuにブートします。
+
+``` sh
+#sh
+qemu-system-x86_64 \
+-kernel ~/workspace_my_linux/linux-5.13.2/arch/x86_64/boot/bzImage \
+-initrd ~/workspace_my_linux/my_initramfs/initramfs.cpio.gz \
+-append "init=/bin/sh console=ttyS0" -nographic -gdb tcp::12345 -S
+```
+
+* -S: gdbでの接続を待つオプション
+
+もう一つのターミナルでLinux Kernelのフォルダに移動してgdbを起動します。
+
+```sh
+#sh
+cd ~/workspace_my_linux/linux-5.13.2
+gdb
+```
+
+### gdb起動後
+
+以下のgdbのコマンドを入力します。
+
+```gdb
+target remote localhost:12345
+symbol-file vmlinux
+b start_kernel
+c
+```
+
+* コマンド補足
+  * target remote localhost:12345: qemuで待ち受けているポートに接続します。
+  * symbol-file vmlinux: ビルドしたLinux Kernelのシンボルが記載された"vmlinux"ファイルをgdbに読み込ませます。
+  * b start_kernel: 関数start_kernelにブレークポイントをセットします。
+  * c: continue。プログラムを再開します。つまりプログラムがスタートします。
+
+以下はstart_kernelで止まった時の画面です。
+
+![gdb実行結果](/assets/images/image-2025-10-13-my-linux-build-gdb.png)
+
+#### gdbの使い方
+
+<https://qiita.com/T-ngtj/items/b9d4a92ecbc43579e9eb>
